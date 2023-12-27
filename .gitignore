@@ -1,4 +1,8 @@
-# Byte-compiled / optimized / DLL files
+alembic/__pycache__/*
+__pycache__/*
+postgreSQL.code-workspace
+auth.txt
+alembic/versions/__py# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
