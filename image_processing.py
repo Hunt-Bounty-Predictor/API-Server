@@ -6,6 +6,13 @@ from difflib import SequenceMatcher
 from skimage.metrics import structural_similarity as ssim
 from errors import *
 import numpy as np
+import os
+
+#f = cv2.imread('Ultra.jpg')
+#cv2.imshow('image', f)
+#edges = cv2.Canny(f, 400, 200)
+
+#image = Image.fromarray(edges)
 
 ULTRAx = 1254
 ULTRAy = 170
@@ -25,27 +32,27 @@ GAMMA = 1.28
 
 ULTRA_MAP_NAME = (ULTRAx, ULTRAy, ULTRAx + ULTRAwidth, ULTRAy + ULTRAheight)
 NORM_MAP_NAME = (NORMx, NORMy, NORMx + NORMwidth, NORMy + NORMheight)
-NORM_MAP = (608, 199, 608 +  701, 199 + 701)
-ULTRA_MAP = (1251, 264, 1251 + 937, 264 + 937)
+NORM_MAP = (600, 190, 600 +  720, 190 + 720)
+ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
 
 DESIRED_SIZE = (700, 700)
 
-GOLDEN = (367, 0)
-SALTERS = (543, 20)
-BLANC = (224, 21)
-GODARD = (49, 101)
+GOLDEN = (424, 100)
+SALTERS = (584, 125)
+BLANC = (249, 85)
+GODARD = (76, 100)
 LAWSON = (265, 181)
-ARDEN = (436, 227)
-WINDY = (595, 270)
+ARDEN = (490, 286)
+WINDY = (624, 366)
 SWEETBELL = (327, 339)
-MAW = (143, 298)
-NICHOLS = (434, 395)
-FORT = (238, 416)
-IRON = (49, 436)
-WOLFS = (48, 585)
-LUMBER = (408, 585)
+MAW = (114, 269)
+NICHOLS = (465, 454)
+FORT = (265, 461)
+IRON = (75, 427)
+WOLFS = (101, 603)
+LUMBER = (424, 563)
 HEMLOCK = (584, 585)
-BRADLEY = (265, 603)
+BRADLEY = (287, 585)
 
 LAWSON_POINTS = {
     'GOLDEN': GOLDEN,
@@ -69,7 +76,7 @@ LAWSON_POINTS = {
 def cropArray(arr, crop):
     return arr[crop[1]:crop[3], crop[0]:crop[2]]
 
-def matchText(text):
+def getMostSimilarText(text):
     text = text.lower()
     names = {
         "stillwater bayou",
@@ -81,7 +88,7 @@ def matchText(text):
         if SequenceMatcher(None, text, name).ratio() > 0.8:
             return name
         
-    return "Unknown"
+    return None
 
 def showImage(arr):
     cv2.imshow('image', arr)
@@ -92,7 +99,7 @@ def showImage(arr):
     # closing all open windows
     cv2.destroyAllWindows()
 
-def getText(file):
+def getmapNameBasedOnText(file):
     f = cv2.imread(file)
     
     height, width = f.shape[:2]
@@ -114,7 +121,7 @@ def getText(file):
     
     lines = text.splitlines()
     
-    text = matchText(lines[-1].strip())
+    text = getMostSimilarText(lines[-1].strip())
         
     return text
 
@@ -143,6 +150,33 @@ def isUltra(arr):
     
     else:
         raise InvalidAspectRatio()
+    
+    
+def getMapNameBasedOnImage(arr, imagePath):
+    for imageName in os.listdir(imagePath):
+        image = cv2.imread(imagePath + imageName)
+        
+        assert image is not None
+        if image.shape != arr.shape:
+            image = cv2.resize(image, DESIRED_SIZE)
+        
+        print(compareImages(arr, image) )
+        
+        if compareImages(arr, image) > 0.6:
+            return image.split('.')[0]
+        
+    return None
+        
+        
+def getMapName(arr):
+    text = getmapNameBasedOnText(arr)
+    
+    if text:
+        return text
+    
+    else:
+        return getMapNameBasedOnImage(arr, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/defaultMaps/')
+    
 
 def cropForItem(arr, option : str):
     isArrUltra = isUltra(arr)
@@ -156,8 +190,8 @@ def cropForItem(arr, option : str):
 def loadImage(file, grayscale = False):
     return cv2.imread(file) if not grayscale else cv2.imread(file, cv2.IMREAD_GRAYSCALE)
 
-def getMap(file, resize = True):
-    arr = loadImage(file, True)
+def getMap(file, resize = True, grayscale = False):
+    arr = loadImage(file, grayscale)
     
     arr = cropForItem(arr, "map")
     
@@ -271,9 +305,77 @@ def getInBounty(mapArr, compounds, threshold):
         
     return averages
 
+def getContours(arr):
+    arrCopy = arr.copy()
+    
+    imageRGB = cv2.cvtColor(arrCopy, cv2.COLOR_BGR2RGB)
+    
+    lowerRed = np.array([60, 0, 0])
+    upperRed = np.array([200, 50, 50])
+    
+    mask = cv2.inRange(imageRGB, lowerRed, upperRed)
+    
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    """epsilon = 0.01 * cv2.arcLength(contours[0], True)  # Adjust epsilon as needed
+    approximated_contour = cv2.approxPolyDP(contours[0], epsilon, True)"""
+    
+    bountyZoneContour = contours #max(contours, key = cv2.contourArea)
+    
+    return bountyZoneContour
+
+def drawContours(arr, contours):
+    # Draw all contours
+    # -1 signifies drawing all contours
+    cv2.drawContours(arr, contours, -1, (0, 255, 0), thickness=cv2.FILLED)
+    
+    return arr
+
+def makeContourShape(arr, contours):
+    mask = np.zeros(arr.shape[:2], dtype=np.uint8)
+    
+    for contour in contours:
+        cv2.drawContours(mask, [contour], -1, (255), thickness=7)
+        
+    unified_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    #unified_contour = max(unified_contours, key=cv2.contourArea)
+    
+    return unified_contours
+
+def isPointInMask(mask, point: tuple):
+    return all(mask[point[1], point[0]] == (0, 255, 0))
+
+def getMaskedMap(mapArr):
+    """mask = np.zeros(mapArr.shape[:2], dtype=np.uint8)
+    
+    for contour in contours:
+        cv2.drawContours(mask, [contour], -1, (255), thickness=cv2.FILLED)
+        
+    maskedMap = cv2.bitwise_and(mapArr, mapArr, mask=mask)
+    
+    return maskedMap"""
+
+    contours = getContours(mapArr)
+    
+    c = makeContourShape(mapArr, contours)
+    
+    return drawContours(mapArr, c)
+
+
+    
+
 """Possibly switch to smaller squares to avoid when boss is being banished"""
 
 if __name__ == "__main__":
-    image = applyLevels(getMap(r"E:\replays\Hunt Showdown\Map\testing\images\Lawson 2C.jpg", True))
+    """image = getMap(r'E:\replays\Hunt Showdown\Map\CB.png')
     
-    print(getInBounty(image, LAWSON_POINTS, 20))
+    maskedImage = getMaskedMap(image)   
+    
+    showImage(maskedImage)
+    
+    for compound in LAWSON_POINTS:
+        if isPointInMask(maskedImage, LAWSON_POINTS[compound]):
+            print(compound)"""
+            
+    print(getMapName(getMap(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))
