@@ -94,6 +94,8 @@ class PrimaryPhase(Base):
     phases: Mapped[List['Phase']] = relationship("Phase", back_populates="primary_phase")
     processingCompleted: Mapped[bool] = mapped_column(default=False)
     
+    bounty_count: Mapped[int] = mapped_column(default=1) # only needed in primary phase, all other phases on the same map will have the same number of bounties
+    
 class Phase(Base):
     """
     These phases encapsulate all clues coillected from a round. 
