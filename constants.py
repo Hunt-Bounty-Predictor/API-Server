@@ -79,7 +79,11 @@ class Crops:
     NORM_MAP = (600, 190, 600 +  720, 190 + 720)
     ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
     
-    ULTRA_BOUNTY_1 = (139, 130, 139 + 72, 130 + 38)
+    ULTRA_BOUNTY_1_NUMS = (139, 130, 139 + 72, 130 + 38)
+    ULTRA_BOUNTY_1_PHASE = (74, 82, 74 + 28, 82 + 40)
+    
+    ULTRA_BOUNTY_2_NUMS = (138, 256, 138 + 72, 256 + 38)
+    ULTRA_BOUNTY_2_PHASE = (74, 209, 74 + 31, 209 + 31)
     
     DESIRED_SIZE = (700, 700)
     
