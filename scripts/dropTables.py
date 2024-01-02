@@ -1,5 +1,6 @@
 from scheme import Base
 from sqlalchemy import create_engine, MetaData, text
+from constants import engine
 # Replace 'your_database_uri' with your actual database URI
 
 # Drop all tables
@@ -7,7 +8,6 @@ from sqlalchemy import create_engine, MetaData, text
 """run with python3 -m scripts.dropTables"""
 
 if __name__ == "__main__":
-    engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
     metadata = MetaData()
     metadata.reflect(bind=engine)
 

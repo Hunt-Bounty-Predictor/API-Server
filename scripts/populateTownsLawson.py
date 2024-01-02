@@ -80,24 +80,8 @@ from scheme import Town
 engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
 metadata_obj = MetaData()
 if __name__ == "__main__":
-    
-    """with session:
-        result = session.scalars(select(Town)).all()
-        
-        print(result, "\n\n\n\n\n\n\n")"""
-        
-        
-        
 
     with session:
         session.add_all(Lawson.getTowns())
         
         session.commit()
-        """for town in LAWSON_FULL_NAMES:
-            x, y = LAWSON_FULL_NAMES[town]
-            try:
-                session.add_all([Town(name=town, x=x, y=y, map_id=2)])
-                #result = session.execute(text("INSERT INTO town (name, x, y, map_id) VALUES (:name, :x, :y, :map_id)"), {"name": town, "x": x, "y": y, "map_id": 2})
-            except (psycopg2.errors.UniqueViolation, sqlalchemy.exc.IntegrityError):
-                print(f"Town {town} already exists")
-            session.commit()"""

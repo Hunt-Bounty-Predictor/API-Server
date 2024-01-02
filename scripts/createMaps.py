@@ -1,13 +1,15 @@
 from constants import Maps, session
 from scheme import Map
 from helpers import getAllInnerClasses
+from sqlalchemy.exc import IntegrityError
 
 with session:
-    for c in getAllInnerClasses(Maps):
+    
+    for map in Maps.getMaps():
         try:
-            session.add(Map(name=c.__name__, id=c.id))
+            session.add(map)
             
             session.commit()
-        except:
+        except IntegrityError:
             session.rollback()
-            print(f"Map {c.__name__} already exists")
+            print(f"Map {map.name} already exists")

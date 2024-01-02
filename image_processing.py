@@ -7,6 +7,9 @@ from skimage.metrics import structural_similarity as ssim
 from errors import *
 import numpy as np
 import os
+from constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
+import re
+import numpy
 
 ULTRAx = 1254
 ULTRAy = 170
@@ -31,9 +34,7 @@ ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
 
 DESIRED_SIZE = (700, 700)
 
-from constants import Maps
-
-LAWSON_POINTS = Maps.Lawson.LAWSON_FULL_NAMES
+from constants import Lawson
 
 #from scripts import populateTownsLawson
 
@@ -62,6 +63,9 @@ def showImage(arr):
     
     # closing all open windows
     cv2.destroyAllWindows()
+    
+def getText(arr):
+    return pt.image_to_string(arr)
 
 def getmapNameBasedOnText(arr):
             
@@ -132,13 +136,18 @@ def getMapName(uncroppedImage):
     
 
 def cropForItem(arr, option : str):
+    
     isArrUltra = isUltra(arr)
 
-    if option == "map":
+    if option == CropOptions.MAP:
         return cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
     
-    elif option == "name":
+    elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
+    
+    elif option == CropOptions.BOUNTY_1_NUMBERS:
+        return cropArray(arr, Crops.ULTRA_BOUNTY_1 if isArrUltra else Crops.NORM_BOUNTY_1)
+        
 
 def loadImage(file, grayscale = False):
     return cv2.imread(file) if not grayscale else cv2.imread(file, cv2.IMREAD_GRAYSCALE)
@@ -317,18 +326,28 @@ def getMaskedMap(mapArr):
 
 def getCompoundCountInBounty(mapArr, compounds):
     maskedImage = getMaskedMap(mapArr)
-    return sum([isPointInMask(maskedImage, compounds[compound]) for compound in compounds])
+    saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/masked.jpg')
+    return sum([isPointInMask(maskedImage, point) for point in compounds])
     
+def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:
     
-
+    """Returns the phase of the bounty based on the number of clues collected for the bounty."""
+    
+    croppedImage = cropForItem(image, CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
+    
+    nums = getText(croppedImage)
+    
+    return BountyPhases(int(re.search(r"[(](\d+)[\/]", nums).group(1)))
 
     
 
 """Possibly switch to smaller squares to avoid when boss is being banished"""
 
 if __name__ == "__main__":
-    image = getMap(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 3C.jpg')
+    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Ultra Lawson.jpg')
     
-    print(getCompoundCountInBounty(image, LAWSON_POINTS))
+    """print(getCompoundCountInBounty(image, Lawson.getTownTuples()))
             
-    print(getMapName(loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))
+    print(getMapName(loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))"""
+    
+    print(getBountyPhase(image))
