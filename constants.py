@@ -93,15 +93,19 @@ class CropOptions(Enum):
     MAP = 1
     NAME = 2
     BOUNTY_1_NUMBERS = 3
-    BOUNTY_1_NAME = 4
+    BOUNTY_1_PHASE = 4
     BOUNTY_2_NUMBERS = 5
-    BOUNTY_2_NAME = 6
+    BOUNTY_2_PHASE = 6
     
 class BountyPhases(Enum):
     NO_CLUES = 0
     ONE_CLUE = 1
     TWO_CLUES = 2
     THREE_CLUES = 3
+    
+class BountyCount(Enum):
+    ONE = 1
+    TWO = 2
     
 import numpy
     

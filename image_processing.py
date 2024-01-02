@@ -8,6 +8,7 @@ from errors import *
 import numpy as np
 import os
 from constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
+import constants
 import re
 import numpy
 
@@ -146,7 +147,16 @@ def cropForItem(arr, option : str):
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
     
     elif option == CropOptions.BOUNTY_1_NUMBERS:
-        return cropArray(arr, Crops.ULTRA_BOUNTY_1 if isArrUltra else Crops.NORM_BOUNTY_1)
+        return cropArray(arr, Crops.ULTRA_BOUNTY_1_NUMS if isArrUltra else Crops.NORM_BOUNTY_1_NUMS)
+    
+    elif option == CropOptions.BOUNTY_1_PHASE:
+        return cropArray(arr, Crops.ULTRA_BOUNTY_1_PHASE if isArrUltra else Crops.NORM_BOUNTY_1_PHASE)
+    
+    elif option == CropOptions.BOUNTY_2_NUMBERS:
+        return cropArray(arr, Crops.ULTRA_BOUNTY_2_NUMS if isArrUltra else Crops.NORM_BOUNTY_2_NUMS)
+    
+    elif option == CropOptions.BOUNTY_2_PHASE:
+        return cropArray(arr, Crops.ULTRA_BOUNTY_2_PHASE if isArrUltra else Crops.NORM_BOUNTY_2_PHASE)
         
 
 def loadImage(file, grayscale = False):
@@ -337,17 +347,29 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
     
     nums = getText(croppedImage)
     
-    return BountyPhases(int(re.search(r"[(](\d+)[\/]", nums).group(1)))
-
+    try:
     
+        return BountyPhases(int(re.search(r"([0-3]+)", nums).group(1))) 
+    
+    except AttributeError:
+        
+        return -1
 
-"""Possibly switch to smaller squares to avoid when boss is being banished"""
+def getNumberOfBounties(image : COLORED_IMAGE) -> int:
+    """Returns the number of bounties on the map."""
+    total = 0
+    
+    if getBountyPhase(image, 1) != -1:
+        total += 1
+        
+    if getBountyPhase(image, 2) != -1:
+        total += 1
+        
+    assert total > 0 and total < 3
+    
+    return constants.BountyCount(total)
 
 if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Ultra Lawson.jpg')
+    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson Split.jpg')
     
-    """print(getCompoundCountInBounty(image, Lawson.getTownTuples()))
-            
-    print(getMapName(loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))"""
-    
-    print(getBountyPhase(image))
+    print(getNumberOfBounties(image))

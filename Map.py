@@ -7,6 +7,7 @@ class Map:
         self.map = getMap(file)
         self.mapName = getMapName(self.image)
         self.maskedMap = getMaskedMap(self.map)
+
         
 if __name__ == "__main__":
     m = Map(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')

@@ -7,9 +7,11 @@ import cv2
 from image_processing import *
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
-from scheme import *
+import scheme
 from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
+from sqlalchemy.sql import exists
+import constants
 
 
 
@@ -28,12 +30,27 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
         )
     return api_key_header
 
-async def dummy_dependency():
-    return True
+username = APIKeyHeader(name="Username", auto_error=False)
+
+async def get_user(username: str = Depends(username)):
+    
+    print("Username: " + username)
+    
+    with constants.session as sesh:
+        try:
+            sesh.query(exists().where(scheme.User.name == username)).one()
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username",
+            )
+            
+    return username
 
 engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
 
-router = APIRouter(prefix="/api", dependencies=[Depends(get_api_key)]) # "Protected" routes
+loginRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key)]) # "Protected" routes
+protectedRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key), Depends(get_user)]) # "Protected" routes
 app = FastAPI(debug=True)
 
 
@@ -42,17 +59,13 @@ To run the server, run the following command in the terminal:
 
 hypercorn main:app"""
 
-@router.get('/')
-def home():
-    return "Hello, World!"
-
 @app.get('/APIKey') # No depedencies needed
 def getAPIKey():
     return {
         "APIKey": APIKey 
     }
     
-@router.post('/upload')
+@protectedRouter.post('/upload')
 async def uploadImage(file: UploadFile = File(...)):
     try:
         contents = await file.read()
@@ -77,11 +90,11 @@ async def uploadImage(file: UploadFile = File(...)):
 class UserIn(BaseModel):
     username: str
     
-@router.post('/register')
+@loginRouter.post('/register')
 async def register(user: UserIn):
     try:
         with Session(engine) as session:
-            session.execute(insert(User), {"name": user.username})
+            session.execute(insert(scheme.User), {"name": user.username})
             session.commit()
         
         return {
@@ -99,11 +112,11 @@ async def register(user: UserIn):
                 "message": str(e)
                 })
     
-@router.post('/login')
+@loginRouter.post('/login')
 async def login(user: UserIn):
     try:
         with Session(engine) as session:
-            user = session.query(User).filter_by(name=user.username).first()
+            user = session.query(scheme.User).filter_by(name=user.username).first()
             
             if user == None:
                 raise Exception("User not found")
@@ -125,6 +138,7 @@ async def login(user: UserIn):
                 })
     
 
-app.include_router(router) 
+for router in [loginRouter, protectedRouter]:
+    app.include_router(router)
 
 #Helo
