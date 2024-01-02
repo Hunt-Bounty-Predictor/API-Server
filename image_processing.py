@@ -8,12 +8,6 @@ from errors import *
 import numpy as np
 import os
 
-#f = cv2.imread('Ultra.jpg')
-#cv2.imshow('image', f)
-#edges = cv2.Canny(f, 400, 200)
-
-#image = Image.fromarray(edges)
-
 ULTRAx = 1254
 ULTRAy = 170
 ULTRAwidth = 926
@@ -37,41 +31,11 @@ ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
 
 DESIRED_SIZE = (700, 700)
 
-GOLDEN = (424, 100)
-SALTERS = (584, 125)
-BLANC = (249, 85)
-GODARD = (76, 100)
-LAWSON = (265, 181)
-ARDEN = (490, 286)
-WINDY = (624, 366)
-SWEETBELL = (327, 339)
-MAW = (114, 269)
-NICHOLS = (465, 454)
-FORT = (265, 461)
-IRON = (75, 427)
-WOLFS = (101, 603)
-LUMBER = (424, 563)
-HEMLOCK = (584, 585)
-BRADLEY = (287, 585)
+from constants import Maps
 
-LAWSON_POINTS = {
-    'GOLDEN': GOLDEN,
-    'SALTERS': SALTERS,
-    'BLANC': BLANC,
-    'GODARD': GODARD,
-    'LAWSON': LAWSON,
-    'WINDY': WINDY,
-    'ARDEN': ARDEN,
-    'SWEETBELL': SWEETBELL,
-    'MAW': MAW,
-    'NICHOLS': NICHOLS,
-    'IRON': IRON,
-    'FORT': FORT,
-    'WOLFS': WOLFS,
-    'LUMBER': LUMBER,
-    'HEMLOCK': HEMLOCK,
-    'BRADLEY': BRADLEY
-}
+LAWSON_POINTS = Maps.Lawson.LAWSON_FULL_NAMES
+
+#from scripts import populateTownsLawson
 
 def cropArray(arr, crop):
     return arr[crop[1]:crop[3], crop[0]:crop[2]]
@@ -99,25 +63,9 @@ def showImage(arr):
     # closing all open windows
     cv2.destroyAllWindows()
 
-def getmapNameBasedOnText(file):
-    f = cv2.imread(file)
-    
-    height, width = f.shape[:2]
-
-    aspectRatio = Fraction(width, height)
-    
-    edges = cv2.Canny(f, 400, 200)
-    
-    if aspectRatio == Fraction(21, 9) or \
-        aspectRatio == Fraction(43, 18) or \
-        aspectRatio == Fraction(64, 27):
+def getmapNameBasedOnText(arr):
             
-        cropped = cropArray(edges, ULTRA_MAP_NAME)
-        
-    elif aspectRatio == Fraction(16, 9):
-        cropped = cropArray(edges, NORM_MAP_NAME)
-        
-    text = pt.image_to_string(cropped)
+    text = pt.image_to_string(arr)
     
     lines = text.splitlines()
     
@@ -160,22 +108,27 @@ def getMapNameBasedOnImage(arr, imagePath):
         if image.shape != arr.shape:
             image = cv2.resize(image, DESIRED_SIZE)
         
-        print(compareImages(arr, image) )
-        
         if compareImages(arr, image) > 0.6:
-            return image.split('.')[0]
+            return imageName.split('.')[0]
         
     return None
         
         
-def getMapName(arr):
-    text = getmapNameBasedOnText(arr)
+def getMapName(uncroppedImage):
+    """
+    Accepts the path to an image and returns the name of the map."""
+    
+    uncroppedImage
+    
+    text = getmapNameBasedOnText(cropForItem(uncroppedImage, "name"))
     
     if text:
         return text
     
     else:
-        return getMapNameBasedOnImage(arr, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/defaultMaps/')
+        uncroppedImage = cropForItem(uncroppedImage, "map")
+        uncroppedImage = cv2.resize(uncroppedImage, DESIRED_SIZE)
+        return getMapNameBasedOnImage(uncroppedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/defaultMaps/')
     
 
 def cropForItem(arr, option : str):
@@ -362,20 +315,20 @@ def getMaskedMap(mapArr):
     
     return drawContours(mapArr, c)
 
+def getCompoundCountInBounty(mapArr, compounds):
+    maskedImage = getMaskedMap(mapArr)
+    return sum([isPointInMask(maskedImage, compounds[compound]) for compound in compounds])
+    
+    
+
 
     
 
 """Possibly switch to smaller squares to avoid when boss is being banished"""
 
 if __name__ == "__main__":
-    """image = getMap(r'E:\replays\Hunt Showdown\Map\CB.png')
+    image = getMap(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 3C.jpg')
     
-    maskedImage = getMaskedMap(image)   
-    
-    showImage(maskedImage)
-    
-    for compound in LAWSON_POINTS:
-        if isPointInMask(maskedImage, LAWSON_POINTS[compound]):
-            print(compound)"""
+    print(getCompoundCountInBounty(image, LAWSON_POINTS))
             
-    print(getMapName(getMap(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))
+    print(getMapName(loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 1C.jpg')))

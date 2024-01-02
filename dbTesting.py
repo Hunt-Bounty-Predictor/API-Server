@@ -3,8 +3,10 @@ from sqlalchemy import create_engine, text, MetaData, Table, Column, Integer, St
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column, relationship
 from typing import List, Optional
 
-engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
-metadata_obj = MetaData()
+from constants import engine, metadata_obj
+
+#engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
+#metadata_obj = MetaData()
 
 """with engine.connect() as conn:
     result = conn.execute(text("DROP TABLE IF EXISTS some_table"))

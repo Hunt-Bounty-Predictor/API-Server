@@ -12,18 +12,7 @@ class Base(DeclarativeBase):
 #alembic revision --autogenerate -m ""
 #alembic upgrade head
 
-"""class User(Base):
-    __tablename__ = "user_account"
-    
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(30))
-    fullname: Mapped[Optional[str]] # Mapped[str | None]
-    
-    addresses: Mapped[List['Address']] = relationship(back_populates="user")
-    
-    def __repr__(self) -> str:
-        return f"User(id={self.id!r}, name={self.name!r}, fullname={self.fullname!r})"""
-    
+
 class Map(Base):
     __tablename__ = "map"
     
@@ -31,7 +20,7 @@ class Map(Base):
     name: Mapped[str] 
     towns: Mapped[List['Town']] = relationship(back_populates="map")
     extracts: Mapped[List['Extract']] = relationship(back_populates="map")
-    phases: Mapped[List['Phase']] = relationship("Phase", back_populates="what_map")
+    phases: Mapped[List['PrimaryPhase']] = relationship(back_populates="what_map")
     
     def __repr__(self) -> str:
         return f"Map(id={self.id!r}, name={self.name!r})"
@@ -40,9 +29,12 @@ class Town(Base):
     __tablename__ = "town"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] 
+    name: Mapped[str] = mapped_column(unique=True)
     map_id: Mapped[int] = mapped_column(ForeignKey("map.id"))
     map: Mapped[Map] = relationship(back_populates="towns")
+    
+    x: Mapped[int]
+    y: Mapped[int]
     
     def __repr__(self) -> str:
         return f"Town(id={self.id!r}, name={self.name!r})"
@@ -71,6 +63,7 @@ class User(Base):
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.name!r}"
     
+
     
 class Image(Base):
     __tablename__ = "image"
@@ -86,7 +79,25 @@ class Image(Base):
     def __repr__(self) -> str:
         return f"Image(id={self.id!r}, name={self.name!r}"
     
+    
+class PrimaryPhase(Base):
+    """
+    This is the phase that encapsulates the start of the map.
+    This will be when no clues have been collected.
+    "Round" may never be finished."""
+    __tablename__ = "primary_phase"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    map_id: Mapped[int] = mapped_column(ForeignKey("map.id"))  # Foreign key to Map
+    what_map: Mapped[Map] = relationship("Map", back_populates="phases")  # Relationship to Map
+    phases: Mapped[List['Phase']] = relationship("Phase", back_populates="primary_phase")
+    processingCompleted: Mapped[bool] = mapped_column(default=False)
+    
 class Phase(Base):
+    """
+    These phases encapsulate all clues coillected from a round. 
+    And will ideally have the boss location within on or two of the maps."""
     __tablename__ = "phase"
     
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -95,11 +106,16 @@ class Phase(Base):
     image: Mapped[Image] = relationship(back_populates="phase")
     
     
-    map_id: Mapped[int] = mapped_column(ForeignKey("map.id"))  # Foreign key to Map
+    """map_id: Mapped[int] = mapped_column(ForeignKey("map.id"))  # Foreign key to Map
     what_map: Mapped[Map] = relationship("Map", back_populates="phases")  # Relationship to Map
+    """
+    
+    primary_phase_id: Mapped[int] = mapped_column(ForeignKey("primary_phase.id"))
+    primary_phase: Mapped[PrimaryPhase] = relationship("PrimaryPhase", back_populates="phases")
     
     phase_number: Mapped[int]
-    towns: Mapped[str] = mapped_column(String(16))
+    towns: Mapped[str] = mapped_column(String(16), default="0000000000000000")
+    processingCompleted: Mapped[bool] = mapped_column(default=False)
     
     def __repr__(self) -> str:
         return f"Phase(id={self.id!r}, name={self.name!r}"
