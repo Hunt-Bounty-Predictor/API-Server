@@ -204,6 +204,8 @@ def isPointInMask(mask, point: tuple):
 
 def getCompoundCountInBounty(mapArr, compounds):
     maskedImage = getCompoundMask(mapArr)
+    
+    saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
 
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
@@ -302,13 +304,13 @@ def drawPoints(arr, points):
     return arr
 
 if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 3C.jpg')
+    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0C.jpg')
     
     m = cropForItem(image, CropOptions.MAP)
     
     tmp = getCompoundMask(m)
     
-    saveImage(drawPoints(tmp, Lawson.getTownTuples()), r'/mnt/e/replays/Hunt Showdown/Map/testing/images/points.jpg')
+    saveImage(drawPoints(tmp, Lawson.getTownTuples()), r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
     
     print(getCompoundCountInBounty(m, Lawson.getTownTuples()))
     
