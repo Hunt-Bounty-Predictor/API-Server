@@ -141,7 +141,9 @@ def cropForItem(arr, option : str):
     isArrUltra = isUltra(arr)
 
     if option == CropOptions.MAP:
-        return cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
+        mapArr = cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
+        
+        return cv2.resize(mapArr, constants.Crops.DESIRED_SIZE)
     
     elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
@@ -174,127 +176,10 @@ def getMap(file, resize = True, grayscale = False):
 def getEdges(arr):
     return cv2.Canny(arr, 400, 200)
 
-def getCompoundLocations(mapArr):
-
-    # Convert image to grayscale
-
-    #gray_image = cv2.cvtColor(mapArr, cv2.COLOR_BGR2GRAY)
-    
-    mapArr = getEdges(mapArr)
-
-
-
-    # Use Tesseract to detect text and their bounding boxes
-
-    custom_config = r'--oem 3 --psm 11'
-
-    d = pt.image_to_data(mapArr, config=custom_config, output_type=pt.Output.DICT)
-    
-    print(d)
-
-
-
-    # Find the center coordinates of each detected text block
-
-    compound_centers = []
-
-    for i in range(len(d['level'])):
-
-        if int(d['conf'][i]) > 0:  # Confidence level > 0 to ensure some accuracy
-
-            (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-
-            center_x = x + w / 2
-
-            center_y = y + h / 2
-
-            compound_centers.append((center_x, center_y))
-    
-    #print(compound_centers)
-    
-def applyLevels(input_img):
-
-    # Create a lookup table for all possible pixel values
-
-    lut = np.arange(256, dtype='float32')
-
-
-
-    # Apply black level (input shadows)
-
-    lut = np.maximum(lut - DARK_POINT, 0) * (255 / (255 - DARK_POINT))
-
-
-
-    # Apply white level (input highlights)
-
-    lut = np.minimum(lut, HIGH_POINT) * (255 / HIGH_POINT)
-
-
-
-    # Apply gamma correction
-
-    lut = ((lut / 255) ** GAMMA) * 255
-
-
-
-    # Ensure values are within [0, 255]
-
-    lut = np.uint8(np.clip(lut, 0, 255))
-
-
-
-    # Apply the LUT and return the result
-
-    return cv2.LUT(input_img, lut)
 
 def saveImage(arr, file):
     cv2.imwrite(file, arr)
-    
-def getCompoundAverage(mapArr, compound, boxSize = 80):
-    compound = (compound[0], compound[1], compound[0] + boxSize, compound[1] + boxSize)
-    compound = cropArray(mapArr, compound)
-    
-    return np.average(compound)
-    
-def getCompoundAverages(mapArr, compounds):
-    averages = {}
-    
-    for compound in compounds:
-        averages[compound] = getCompoundAverage(mapArr, compounds[compound])
-        
-    return averages
 
-def getInBounty(mapArr, compounds, threshold):
-    averages = getCompoundAverages(mapArr, compounds)
-    
-    averages = {}
-    
-    for compound in compounds:
-        avg = getCompoundAverage(mapArr, compounds[compound])
-        if avg > threshold:
-            averages[compound] = True
-        
-    return averages
-
-def getContours(arr):
-    arrCopy = arr.copy()
-    
-    imageRGB = cv2.cvtColor(arrCopy, cv2.COLOR_BGR2RGB)
-    
-    lowerRed = np.array([60, 0, 0])
-    upperRed = np.array([200, 50, 50])
-    
-    mask = cv2.inRange(imageRGB, lowerRed, upperRed)
-    
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    """epsilon = 0.01 * cv2.arcLength(contours[0], True)  # Adjust epsilon as needed
-    approximated_contour = cv2.approxPolyDP(contours[0], epsilon, True)"""
-    
-    bountyZoneContour = contours #max(contours, key = cv2.contourArea)
-    
-    return bountyZoneContour
 
 def drawContours(arr, contours):
     # Draw all contours
@@ -311,32 +196,15 @@ def makeContourShape(arr, contours):
         
     unified_contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
-    #unified_contour = max(unified_contours, key=cv2.contourArea)
-    
     return unified_contours
 
 def isPointInMask(mask, point: tuple):
-    return all(mask[point[1], point[0]] == (0, 255, 0))
+    return mask[point[1], point[0]] == 255
 
-def getMaskedMap(mapArr):
-    """mask = np.zeros(mapArr.shape[:2], dtype=np.uint8)
-    
-    for contour in contours:
-        cv2.drawContours(mask, [contour], -1, (255), thickness=cv2.FILLED)
-        
-    maskedMap = cv2.bitwise_and(mapArr, mapArr, mask=mask)
-    
-    return maskedMap"""
-
-    contours = getContours(mapArr)
-    
-    c = makeContourShape(mapArr, contours)
-    
-    return drawContours(mapArr, c)
 
 def getCompoundCountInBounty(mapArr, compounds):
-    maskedImage = getMaskedMap(mapArr)
-    saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/masked.jpg')
+    maskedImage = getCompoundMask(mapArr)
+
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
 def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:
@@ -369,7 +237,79 @@ def getNumberOfBounties(image : COLORED_IMAGE) -> int:
     
     return constants.BountyCount(total)
 
-if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson Split.jpg')
+def getBountyZone(mapArr : COLORED_IMAGE):
+    hsv = cv2.cvtColor(mapArr, cv2.COLOR_BGR2HSV)
     
-    print(getNumberOfBounties(image))
+    h, s, v = cv2.split(hsv) # Up sat and brightness
+    
+    s = cv2.multiply(s, 3)
+    s = np.clip(s, 0, 255)
+    
+    v = cv2.multiply(v, 2)
+    v = np.clip(v, 0, 255)
+    
+    hsv = cv2.merge([h, s, v])
+    
+    image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    
+    lowerRange = np.array([0, 0, 100])
+    upperRange = np.array([50, 50, 255])
+    
+    mask = cv2.inRange(image, lowerRange, upperRange)
+    
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) 
+    
+    largest_contour = [cnt for cnt in contours if cv2.contourArea(cnt) > 15]
+    
+    emptyMask = np.zeros_like(image)
+    
+    cv2.drawContours(emptyMask, largest_contour, -1, (0, 255, 0), thickness=10)
+    
+    return emptyMask
+    
+def fillInside(arr):
+    """Fills the inside of largest contour in the image."""
+    
+    # Convert to grayscale
+    gray = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
+    
+    # Threshold the image to get a binary image
+    _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+
+    # Find contours
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Assuming the largest contour is the one we want to fill
+    largest_contour = max(contours, key=cv2.contourArea)
+    
+    # Create an empty mask to draw the filled contour
+    filled_mask = np.zeros_like(gray)
+    
+    # Draw the filled contour on the mask
+    cv2.drawContours(filled_mask, [largest_contour], -1, color=255, thickness=cv2.FILLED)
+    
+    return filled_mask
+
+def getCompoundMask(arr) -> constants.GRAYSCALE_IMAGE:
+    arr = getBountyZone(arr)
+    return fillInside(arr)
+
+def drawPoints(arr, points):
+    arr = cv2.cvtColor(arr, cv2.COLOR_GRAY2BGR)
+    for point in points:
+        cv2.circle(arr, point, 5, (0, 0, 255), -1)
+        
+    return arr
+
+if __name__ == "__main__":
+    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 3C.jpg')
+    
+    m = cropForItem(image, CropOptions.MAP)
+    
+    tmp = getCompoundMask(m)
+    
+    saveImage(drawPoints(tmp, Lawson.getTownTuples()), r'/mnt/e/replays/Hunt Showdown/Map/testing/images/points.jpg')
+    
+    print(getCompoundCountInBounty(m, Lawson.getTownTuples()))
+    
+    

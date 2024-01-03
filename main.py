@@ -4,15 +4,16 @@ from fastapi import FastAPI, APIRouter, File, Header, UploadFile, HTTPException,
 from fastapi.security import APIKeyHeader
 import numpy as np
 import cv2
-from image_processing import *
-from sqlalchemy import create_engine, insert
-from sqlalchemy.orm import Session
+import image_processing
+from sqlalchemy import create_engine, insert, update
+from sqlalchemy.orm import Session, joinedload
 import scheme
 from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
 from sqlalchemy.sql import exists
 import constants
 from constants import session
+import os
 
 
 
@@ -37,7 +38,6 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
 username = APIKeyHeader(name="Username", auto_error=False)
 
 async def get_user(username: str = Depends(username)):
-    
     with constants.session as sesh:
         try:
             sesh.query(exists().where(scheme.User.name == username)).one()
@@ -51,8 +51,6 @@ async def get_user(username: str = Depends(username)):
             )
             
     return username
-
-#engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
 
 loginRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key)]) # "Protected" routes
 protectedRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key), Depends(get_user)]) # "Protected" routes
@@ -72,17 +70,63 @@ def getAPIKey():
     
 @protectedRouter.post('/upload')
 async def uploadImage(file: UploadFile = File(...), username : str = Header(None)):
+    BASE_PATH = "/home/happy/apiServer/data/images/"    
     try:
-        print(username)
-        contents = await file.read()
-        
-        # Convert the contents to a numpy array
-        nparr = np.fromstring(contents, np.uint8)
-        
-        # Decode the numpy array into an image
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        saveImage(img, "test.jpg")
+        with session:
+            
+            existingUser = session.query(scheme.User).filter_by(name=username).first() # The user is guarenteed to exits, because of the get_user dependency
+            
+            contents = await file.read()
+            
+            # Convert the contents to a numpy array
+            nparr = np.fromstring(contents, np.uint8)
+            
+            # Decode the numpy array into an image
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            # Process the image
+            bountyCount = image_processing.getCompoundCountInBounty(img, constants.Lawson.getTownTuples())
+            
+            if bountyCount == 16:
+                # The image is the first image of the map
+                # Need to create a primary phase
+                
+                newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
+                
+                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2)
+                
+            else:
+                # The image is not the first image of the map
+                # Need to create a phase
+                
+                newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=False, user = existingUser)
+                
+                lastPrimaryPhase = session.query(scheme.PrimaryPhase)\
+                    .join(scheme.PrimaryPhase.image)\
+                    .filter(scheme.Image.user_id == existingUser.id)\
+                    .order_by(scheme.PrimaryPhase.id.desc())\
+                    .first()
+                
+                print(lastPrimaryPhase)
+                
+                newPhase = scheme.Phase(image=newImage, map_id = 2, primary_phase = lastPrimaryPhase)
+                
+            session.add(newImage)
+            session.add(newPhase)
+            session.commit()
+            
+            session.refresh(newImage)
+            
+            filePath = os.path.join(BASE_PATH, str(newImage.id) + ".jpg") # Update path
+            session.execute(
+                update(scheme.Image)
+                .where(scheme.Image.id == newImage.id)
+                .values(path=filePath))
+            session.commit()         
+            
+            """with open(filePath, "wb") as buffer:
+                contents = file.file.read()
+                buffer.write(contents)"""
     
         return {
             'status': 'success',
@@ -90,7 +134,10 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail={
+                "status": "failure",
+                "message": str(e)
+        })
     
     
 class UserIn(BaseModel):

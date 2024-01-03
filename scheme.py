@@ -73,8 +73,11 @@ class Image(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped[User] = relationship(back_populates="images")
     
-    path: Mapped[str]
-    phase: Mapped[Optional['Phase']] = relationship(back_populates="image")
+    path: Mapped[str] # You do not need the actual file name as it will be the id.
+    
+    is_primary: Mapped[bool] = mapped_column(default=False)
+    phase: Mapped[Optional['Phase']] = relationship(back_populates="image") 
+    primary_phase: Mapped[Optional['PrimaryPhase']] = relationship(back_populates="image")
     
     def __repr__(self) -> str:
         return f"Image(id={self.id!r}, name={self.name!r}"
@@ -95,6 +98,10 @@ class PrimaryPhase(Base):
     processingCompleted: Mapped[bool] = mapped_column(default=False)
     
     bounty_count: Mapped[int] = mapped_column(default=1) # only needed in primary phase, all other phases on the same map will have the same number of bounties
+    
+    image_id: Mapped[int] = mapped_column(ForeignKey("image.id"))
+    image: Mapped[Image] = relationship(back_populates="primary_phase")
+    
     
 class Phase(Base):
     """
