@@ -1,6 +1,6 @@
 from flask import Flask, request
 from typing import Union, List
-from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, File, Header, UploadFile, HTTPException, Depends, status
 from fastapi.security import APIKeyHeader
 import numpy as np
 import cv2
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
 from sqlalchemy.sql import exists
 import constants
+from constants import session
 
 
 
@@ -26,7 +27,10 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
     if api_key_header != APIKey:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API Key",
+            detail={
+                "message": "Invalid API Key",
+                "status": "failure"
+            },
         )
     return api_key_header
 
@@ -34,20 +38,21 @@ username = APIKeyHeader(name="Username", auto_error=False)
 
 async def get_user(username: str = Depends(username)):
     
-    print("Username: " + username)
-    
     with constants.session as sesh:
         try:
             sesh.query(exists().where(scheme.User.name == username)).one()
         except:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username",
+                detail={
+                    "message": "User does not exist",
+                    "status": "failure"
+                },
             )
             
     return username
 
-engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
+#engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)
 
 loginRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key)]) # "Protected" routes
 protectedRouter = APIRouter(prefix="/api", dependencies=[Depends(get_api_key), Depends(get_user)]) # "Protected" routes
@@ -66,8 +71,9 @@ def getAPIKey():
     }
     
 @protectedRouter.post('/upload')
-async def uploadImage(file: UploadFile = File(...)):
+async def uploadImage(file: UploadFile = File(...), username : str = Header(None)):
     try:
+        print(username)
         contents = await file.read()
         
         # Convert the contents to a numpy array
@@ -93,7 +99,7 @@ class UserIn(BaseModel):
 @loginRouter.post('/register')
 async def register(user: UserIn):
     try:
-        with Session(engine) as session:
+        with session:
             session.execute(insert(scheme.User), {"name": user.username})
             session.commit()
         
@@ -115,7 +121,7 @@ async def register(user: UserIn):
 @loginRouter.post('/login')
 async def login(user: UserIn):
     try:
-        with Session(engine) as session:
+        with session:
             user = session.query(scheme.User).filter_by(name=user.username).first()
             
             if user == None:
