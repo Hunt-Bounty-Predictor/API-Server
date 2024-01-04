@@ -107,7 +107,9 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
                 # The image is the first image of the map
                 # Need to create a primary phase
                 
-                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2, user = existingUser)
+                bountyCount = image_processing.getNumberOfBounties(img).value
+                
+                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2, user = existingUser, bounty_count = bountyCount)
                 
             else:
                 # The image is not the first image of the map
@@ -115,7 +117,7 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
                 
                 lastPrimaryPhase = max(existingUser.primary_phases, key = lambda phase: phase.id)
                 
-                newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, phase_number = 1, name = "LOL")         
+                newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, phase_number = 1, name = "No additional Information")         
                 
             session.add(newPhase)
             session.commit()

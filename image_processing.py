@@ -103,7 +103,7 @@ def isUltra(arr):
         return False
     
     else:
-        raise InvalidAspectRatio()
+        raise InvalidAspectRatio(message = str(arr.shape[:2]))
     
     
 def getMapNameBasedOnImage(arr, imagePath):
@@ -203,7 +203,7 @@ def isPointInMask(mask, point: tuple):
     return mask[point[1], point[0]] == 255
 
 
-def getCompoundCountInBounty(mapArr, compounds):
+def getCompoundCountInBounty(mapArr, compounds) -> constants.BountyPhases:
     maskedImage = getCompoundMask(mapArr)
     
     saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
@@ -228,14 +228,14 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
         
         return -1
 
-def getNumberOfBounties(image : COLORED_IMAGE) -> int:
+def getNumberOfBounties(image : COLORED_IMAGE) -> constants.BountyCount:
     """Returns the number of bounties on the map."""
     total = 0
     
-    if getBountyPhase(image, 1) != -1:
+    if checkBountyPhaseSymbol(image, 1) != -1:
         total += 1
         
-    if getBountyPhase(image, 2) != -1:
+    if checkBountyPhaseSymbol(image, 2) != -1:
         total += 1
         
     assert total > 0 and total < 3
@@ -336,9 +336,9 @@ def checkBountyPhaseSymbol(arr, symbol = 1):
     return np.average(grayImage) > constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson Split.jpg')
+    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/NORMAL_1B.png')
 
     
-    print(checkBountyPhaseSymbol(image, 1), checkBountyPhaseSymbol(image, 2))
+    print(getNumberOfBounties(image))
     
     
