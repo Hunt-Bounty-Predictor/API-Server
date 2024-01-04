@@ -85,6 +85,12 @@ class Crops:
     ULTRA_BOUNTY_2_NUMS = (138, 256, 138 + 72, 256 + 38)
     ULTRA_BOUNTY_2_PHASE = (74, 209, 74 + 31, 209 + 31)
     
+    NORMAL_BOUNTY_1_NUMS = (104, 100, 104 + 53, 100 + 23)
+    NORMAL_BOUNTY_1_PHASE = (56, 65, 56 + 25, 65 + 25)
+    
+    NORMAL_BOUNTY_2_NUMS = (100, 195, 100 + 58, 195 + 25)
+    NORMAL_BOUNTY_2_PHASE = (53, 156, 53 + 25, 156 + 25)
+    
     DESIRED_SIZE = (700, 700)
     
 from enum import Enum
@@ -111,6 +117,8 @@ import numpy
     
 COLORED_IMAGE = numpy.ndarray[Literal[3]]
 GRAYSCALE_IMAGE = numpy.ndarray[Literal[2]]
+
+BOUNTY_SYMBOL_THRES = 100
     
     
 #print(Lawson.getTowns())
