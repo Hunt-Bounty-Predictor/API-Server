@@ -62,7 +62,7 @@ To run the server, run the following command in the terminal:
 
 hypercorn main:app"""
 
-@app.get('/APIKey') # No depedencies needed
+@app.get('/api/APIKey') # No depedencies needed
 def getAPIKey():
     return {
         "APIKey": APIKey 
