@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: happy
+      POSTGRES_DB: hunt
+      POSTGRES_INITDB_ARGS: --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    volumes:
+      - pgdata:/home/happy/postgreSQL/data/
+    ports:
+      - 5432:5432
+ 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+volumes:
+  pgdata:
