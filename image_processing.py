@@ -336,9 +336,10 @@ def checkBountyPhaseSymbol(arr, symbol = 1):
     return np.average(grayImage) > constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/NORMAL_1B.png')
+    image = loadImage(r"/home/oliver/images/NORMAL_2B.png")
 
-    
-    print(getNumberOfBounties(image))
+    image = cropForItem(image, CropOptions.MAP)
+
+    saveImage(image, r"/home/oliver/images/coppedMaps/desalle.jpeg")
     
     

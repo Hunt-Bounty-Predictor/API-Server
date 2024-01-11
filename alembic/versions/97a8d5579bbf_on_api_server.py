@@ -1,8 +1,8 @@
-"""Adding link from pPhases to images
+"""On api server
 
-Revision ID: 309daf48b2f3
+Revision ID: 97a8d5579bbf
 Revises: 
-Create Date: 2024-01-03 00:18:53.400346
+Create Date: 2024-01-10 23:39:36.963742
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '309daf48b2f3'
+revision: str = '97a8d5579bbf'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -63,8 +63,10 @@ def upgrade() -> None:
     sa.Column('processingCompleted', sa.Boolean(), nullable=False),
     sa.Column('bounty_count', sa.Integer(), nullable=False),
     sa.Column('image_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['image_id'], ['image.id'], ),
     sa.ForeignKeyConstraint(['map_id'], ['map.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('phase',
