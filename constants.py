@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column, rela
 from typing import List, Literal, Optional, Tuple
 from scheme import Town, Map
 
-engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo=True)
+engine = create_engine('postgresql://happy:password@db:5432/hunt', echo=True)
 metadata_obj = MetaData()
 session = Session(engine)
 
