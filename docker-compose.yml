@@ -30,9 +30,10 @@ services:
   api-server:
     image: api-server-image:latest
     ports:
-      - "53012"
+      - 53012:53012
     depends_on:
       - api-server-builder
+      - db
     networks:
       - api-server-network
 

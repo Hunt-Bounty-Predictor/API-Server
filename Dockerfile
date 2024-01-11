@@ -7,6 +7,11 @@ COPY . /app
 
 RUN pip install -r requirements.txt
 
+RUN apt-get update && apt-get install -y postgresql-client
+
+RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/wait-for-postgresql.sh
+
 EXPOSE 53012
 
-CMD ["alembic", "upgrade", "head", "&&", "python", "-m", "scripts.SetupDatabase", "&&", "hypercorn", "main:app", "--bind", "0.0.0.0:53012"]
+ENTRYPOINT ["/app/entrypoint.sh"]
