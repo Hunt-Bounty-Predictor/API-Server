@@ -43,7 +43,7 @@ from Constants import Lawson
 def cropArray(arr, crop): #
     return arr[crop[1]:crop[3], crop[0]:crop[2]]
 
-def getMostSimilarText(text):
+def getMostSimilarText(text): #
     text = text.lower()
     names = {
         "stillwater bayou",
@@ -66,10 +66,10 @@ def showImage(arr):
     # closing all open windows
     cv2.destroyAllWindows()
     
-def getText(arr) -> str:
+def getText(arr) -> str: #
     return pt.image_to_string(arr)
 
-def getmapNameBasedOnText(arr):
+def getmapNameBasedOnText(arr): #
             
     text = pt.image_to_string(arr)
     

@@ -1,4 +1,4 @@
-from Map import Map
+from Screenshot import Screenshot
 import Constants
 import fractions
 
