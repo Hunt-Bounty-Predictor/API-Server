@@ -1,0 +1,44 @@
+version: '3'
+services:
+  db:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: happy
+      POSTGRES_DB: hunt
+      POSTGRES_INITDB_ARGS: --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    volumes:
+      - pgdata:/data/huntPostgresql
+    ports:
+      - 5432:5432
+    networks:
+      - api-server-network
+ 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8090:8080
+
+  api-server-builder:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: api-server-image:latest
+
+  api-server:
+    image: api-server-image:latest
+    ports:
+      - 53012:53012
+    depends_on:
+      - api-server-builder
+      - db
+    networks:
+      - api-server-network
+
+volumes:
+  pgdata:
+
+networks:
+  api-server-network: 
