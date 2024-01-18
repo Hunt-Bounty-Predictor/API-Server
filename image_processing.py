@@ -8,8 +8,8 @@ from skimage.metrics import structural_similarity as ssim
 from errors import *
 import numpy as np
 import os
-from constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
-import constants
+from Constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
+import Constants
 import re
 import numpy
 
@@ -36,7 +36,7 @@ ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
 
 DESIRED_SIZE = (700, 700)
 
-from constants import Lawson
+from Constants import Lawson
 
 #from scripts import populateTownsLawson
 
@@ -144,7 +144,7 @@ def cropForItem(arr, option : str):
     if option == CropOptions.MAP:
         mapArr = cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
         
-        return cv2.resize(mapArr, constants.Crops.DESIRED_SIZE)
+        return cv2.resize(mapArr, Constants.Crops.DESIRED_SIZE)
     
     elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
@@ -168,9 +168,9 @@ def loadImage(file, grayscale = False):
 def getMap(file, resize = True, grayscale = False):
     arr = loadImage(file, grayscale)
     
-    arr = cropForItem(arr, "map")
+    arr = cropForItem(arr, CropOptions.MAP)
     
-    if resize: arr = cv2.resize(arr, DESIRED_SIZE)
+    if resize: arr = cv2.resize(arr, Constants.Crops.DESIRED_SIZE)
     
     return arr
 
@@ -203,7 +203,7 @@ def isPointInMask(mask, point: tuple):
     return mask[point[1], point[0]] == 255
 
 
-def getCompoundCountInBounty(mapArr, compounds) -> constants.BountyPhases:
+def getCompoundCountInBounty(mapArr, compounds) -> Constants.BountyPhases:
     maskedImage = getCompoundMask(mapArr)
     
     saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
@@ -228,7 +228,7 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
         
         return -1
 
-def getNumberOfBounties(image : COLORED_IMAGE) -> constants.BountyCount:
+def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount:
     """Returns the number of bounties on the map."""
     total = 0
     
@@ -240,7 +240,7 @@ def getNumberOfBounties(image : COLORED_IMAGE) -> constants.BountyCount:
         
     assert total > 0 and total < 3
     
-    return constants.BountyCount(total)
+    return Constants.BountyCount(total)
 
 def brightenImage(arr, hMult, sMult, vMult):
     hsv = cv2.cvtColor(arr, cv2.COLOR_BGR2HSV)
@@ -315,7 +315,7 @@ def fillInside(arr):
     
     return filled_mask
 
-def getCompoundMask(arr) -> constants.GRAYSCALE_IMAGE:
+def getCompoundMask(arr) -> Constants.GRAYSCALE_IMAGE:
     arr = getBountyZone(arr)
     return fillInside(arr)
 
@@ -333,13 +333,10 @@ def checkBountyPhaseSymbol(arr, symbol = 1):
     
     grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
     
-    return np.average(grayImage) > constants.BOUNTY_SYMBOL_THRES
+    return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = loadImage(r"/home/oliver/images/NORMAL_2B.png")
-
-    image = cropForItem(image, CropOptions.MAP)
-
-    saveImage(image, r"/home/oliver/images/coppedMaps/desalle.jpeg")
+    image = getMap(r'/home/oliver/images/coppedMaps/stillwater_full.jpg')
+    saveImage(image, r'/home/oliver/images/coppedMaps/stillwater_cropped.jpeg')
     
     

@@ -74,7 +74,7 @@ from sqlalchemy import select, insert
 
 import psycopg2
 
-from constants import Lawson, session
+from Constants import Lawson, session
 from scheme import Town
 
 engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo = True)

@@ -1,6 +1,6 @@
 from scheme import Base
 from sqlalchemy import create_engine, MetaData, text
-from constants import engine
+from Constants import engine
 # Replace 'your_database_uri' with your actual database URI
 
 # Drop all tables

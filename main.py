@@ -11,8 +11,8 @@ import scheme
 from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
 from sqlalchemy.sql import exists
-import constants
-from constants import session
+import Constants
+from Constants import session
 import os
 
 
@@ -38,7 +38,7 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
 username = APIKeyHeader(name="Username", auto_error=False)
 
 async def get_user(username: str = Depends(username)):
-    with constants.session as sesh:
+    with Constants.session as sesh:
         try:
             sesh.query(exists().where(scheme.User.name == username)).one()
         except:
@@ -84,10 +84,10 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
             # Decode the numpy array into an image
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
-            mapArr = image_processing.cropForItem(img, constants.CropOptions.MAP)
+            mapArr = image_processing.cropForItem(img, Constants.CropOptions.MAP)
             
             # Process the image
-            bountyCount = image_processing.getCompoundCountInBounty(mapArr, constants.Lawson.getTownTuples())
+            bountyCount = image_processing.getCompoundCountInBounty(mapArr, Constants.Lawson.getTownTuples())
             
             newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
             session.add(newImage)

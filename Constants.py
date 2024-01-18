@@ -62,6 +62,50 @@ class Lawson(Maps):
     @classmethod
     def getTowns(cls, mapId = 2, startId = 16):
         return super().getTowns(mapId, startId)
+    
+class Stillwater(Maps):
+    ALAINS = Town(name="Alain & Sons Fish", x = 82, y=95)
+    REYNARD = Town(name="Reynard Mill", x = 232, y = 87)
+    PORT = Town(name="Port Reeker", x = 419, y = 113)
+    SCUPPER = Town(name="Scupper Lake", x = 567, y = 85)
+    BLANCHETT = Town(name="Blanchett Graves", x = 137, y = 252)
+    DARROW = Town(name="Darrow Livestock", x = 321, y = 189)
+    ALICE = Town(name="Alice Farm", x = 393, y = 281)
+    CHAPEL = Town(name="Chapel of Madonna Noire", x = 576, y = 263)
+    LOCKBAY = Town(name="Lockbay Docks", x = 294, y = 322)
+    PITCHING = Town(name="Pitching Crematorium", x= 226, y = 479)
+    HEALING = Town(name="Healing Waters Church", x = 381, y = 478)
+    CYPRESS = Town(name="Cypress Huts", x = 74, y = 543)
+    DAVANT = Town(name="Davant Ranch", x = 206, y = 624)
+    SLAUGHTER = Town(name="Slaughter House", x = 409, y = 638)
+    CATFISH = Town(name="Catfish Grove", x=557, y=585)
+    STILLWATER = Town(name = "Stillwater Bend", x = 514, y = 390)
+    
+    @classmethod
+    def getTowns(cls, mapId = 3, startId = 32):
+        return super().getTowns(mapId, startId)
+    
+class Desalle(Maps):
+    KINGSNAKE = Town(name="Kingsnake Mine", x = 79, y = 128)
+    COAL = Town(name="Stanley Coal Company", x= 246, y = 126)
+    HERITAGE = Town(name="Heritage Pork", x = 404, y = 129)
+    PEARL = Town(name="Pearl Plantation", x = 571, y = 127)
+    MOSES = Town(name="Moses Poultry", x = 108, y = 298)
+    WEEPING = Town(name="Weeping Stone Mill", x = 322, y= 247)
+    ASH = Town(name="Ashen Creek Lumber", x = 518, y = 291)
+    FORKED = Town(name="Forked River Fishery", x = 354, y = 389)
+    SEVEN = Town(name="Seven Sisters Estate", x = 73, y = 417)
+    PELICAN = Town(name="Pelican Island Prison", x = 231, y = 417)
+    CHURCH = Town(name="First Testimonial Church", x = 473, y = 450)
+    UPPER = Town(name="Upper DeSalle", x = 603, y = 382)
+    LOWER = Town(name="Lower DeSalle", x = 597, y = 540)
+    REEVES = Town(name="Reeves Quarry", x = 443, y = 576)
+    DARIN = Town(name="Darin Shipyard", x = 294, y = 596)
+    FORT = Town(name = "Fort Bolden", x = 131, y = 560)
+    
+    @classmethod
+    def getTowns(cls, mapId = 1, startId = 0):
+        return super().getTowns(mapId, startId)
       
 class Crops:
     ULTRAx = 1254
