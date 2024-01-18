@@ -64,6 +64,9 @@ class Lawson(Maps):
         return super().getTowns(mapId, startId)
     
 class Stillwater(Maps):
+    ID = 3
+    NAME = "Stillwater Bayou"
+    
     ALAINS = Town(name="Alain & Sons Fish", x = 82, y=95)
     REYNARD = Town(name="Reynard Mill", x = 232, y = 87)
     PORT = Town(name="Port Reeker", x = 419, y = 113)
@@ -86,6 +89,9 @@ class Stillwater(Maps):
         return super().getTowns(mapId, startId)
     
 class Desalle(Maps):
+    ID = 1
+    NAME = "Desalle"
+    
     KINGSNAKE = Town(name="Kingsnake Mine", x = 79, y = 128)
     COAL = Town(name="Stanley Coal Company", x= 246, y = 126)
     HERITAGE = Town(name="Heritage Pork", x = 404, y = 129)
