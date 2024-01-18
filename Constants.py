@@ -119,10 +119,10 @@ class Crops:
     ULTRAwidth = 926
     ULTRAheight = 75
 
-    NORMx = 608
-    NORMy = 115
-    NORMwidth = 699
-    NORMheight = 71
+    NORMx = 630
+    NORMy = 140
+    NORMwidth = 680
+    NORMheight = 50
     
     ULTRA_MAP_NAME = (ULTRAx, ULTRAy, ULTRAx + ULTRAwidth, ULTRAy + ULTRAheight)
     NORM_MAP_NAME = (NORMx, NORMy, NORMx + NORMwidth, NORMy + NORMheight)

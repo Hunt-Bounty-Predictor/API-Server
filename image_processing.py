@@ -40,7 +40,7 @@ from Constants import Lawson
 
 #from scripts import populateTownsLawson
 
-def cropArray(arr, crop):
+def cropArray(arr, crop): #
     return arr[crop[1]:crop[3], crop[0]:crop[2]]
 
 def getMostSimilarText(text):
@@ -88,7 +88,7 @@ def compareImages(image1, image2):
     
     return score
 
-def isUltra(arr):
+def isUltra(arr): #
     height, width = arr.shape[:2]
 
     aspectRatio = Fraction(width, height)
