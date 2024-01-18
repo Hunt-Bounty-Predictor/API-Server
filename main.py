@@ -11,8 +11,8 @@ import scheme
 from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
 from sqlalchemy.sql import exists
-import constants
-from constants import session
+import Constants
+from Constants import session
 import os
 
 
@@ -38,7 +38,7 @@ async def get_api_key(api_key_header: str = Depends(api_key_header)):
 username = APIKeyHeader(name="Username", auto_error=False)
 
 async def get_user(username: str = Depends(username)):
-    with constants.session as sesh:
+    with Constants.session as sesh:
         try:
             sesh.query(exists().where(scheme.User.name == username)).one()
         except:
@@ -62,7 +62,7 @@ To run the server, run the following command in the terminal:
 
 hypercorn main:app"""
 
-@app.get('/APIKey') # No depedencies needed
+@app.get('/api/APIKey') # No depedencies needed
 def getAPIKey():
     return {
         "APIKey": APIKey 
@@ -84,49 +84,45 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
             # Decode the numpy array into an image
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
-            # Process the image
-            bountyCount = image_processing.getCompoundCountInBounty(img, constants.Lawson.getTownTuples())
+            mapArr = image_processing.cropForItem(img, Constants.CropOptions.MAP)
             
-            if bountyCount == 16:
-                # The image is the first image of the map
-                # Need to create a primary phase
-                
-                newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
-                
-                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2)
-                
-            else:
-                # The image is not the first image of the map
-                # Need to create a phase
-                
-                newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=False, user = existingUser)
-                
-                lastPrimaryPhase = session.query(scheme.PrimaryPhase)\
-                    .join(scheme.PrimaryPhase.image)\
-                    .filter(scheme.Image.user_id == existingUser.id)\
-                    .order_by(scheme.PrimaryPhase.id.desc())\
-                    .first()
-                
-                print(lastPrimaryPhase)
-                
-                newPhase = scheme.Phase(image=newImage, map_id = 2, primary_phase = lastPrimaryPhase)
-                
+            # Process the image
+            bountyCount = image_processing.getCompoundCountInBounty(mapArr, Constants.Lawson.getTownTuples())
+            
+            newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
             session.add(newImage)
-            session.add(newPhase)
             session.commit()
             
             session.refresh(newImage)
             
             filePath = os.path.join(BASE_PATH, str(newImage.id) + ".jpg") # Update path
+            
             session.execute(
                 update(scheme.Image)
                 .where(scheme.Image.id == newImage.id)
-                .values(path=filePath))
-            session.commit()         
+                .values(path=filePath, ))
+            session.commit()      
             
-            """with open(filePath, "wb") as buffer:
-                contents = file.file.read()
-                buffer.write(contents)"""
+            if bountyCount == 16:
+                # The image is the first image of the map
+                # Need to create a primary phase
+                
+                bountyCount = image_processing.getNumberOfBounties(img).value
+                
+                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2, user = existingUser, bounty_count = bountyCount)
+                
+            else:
+                # The image is not the first image of the map
+                # Need to create a phase
+                
+                lastPrimaryPhase = max(existingUser.primary_phases, key = lambda phase: phase.id)
+                
+                newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, phase_number = 1, name = "No additional Information")         
+                
+            session.add(newPhase)
+            session.commit()
+            
+            image_processing.saveImage(img, filePath)
     
         return {
             'status': 'success',

@@ -1,3 +1,4 @@
+from PIL import Image
 import cv2
 from PIL import Image
 import pytesseract as pt
@@ -7,8 +8,8 @@ from skimage.metrics import structural_similarity as ssim
 from errors import *
 import numpy as np
 import os
-from constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
-import constants
+from Constants import Crops, CropOptions, BountyPhases, COLORED_IMAGE
+import Constants
 import re
 import numpy
 
@@ -35,7 +36,7 @@ ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
 
 DESIRED_SIZE = (700, 700)
 
-from constants import Lawson
+from Constants import Lawson
 
 #from scripts import populateTownsLawson
 
@@ -65,7 +66,7 @@ def showImage(arr):
     # closing all open windows
     cv2.destroyAllWindows()
     
-def getText(arr):
+def getText(arr) -> str:
     return pt.image_to_string(arr)
 
 def getmapNameBasedOnText(arr):
@@ -102,7 +103,7 @@ def isUltra(arr):
         return False
     
     else:
-        raise InvalidAspectRatio()
+        raise InvalidAspectRatio(message = str(arr.shape[:2]))
     
     
 def getMapNameBasedOnImage(arr, imagePath):
@@ -143,22 +144,22 @@ def cropForItem(arr, option : str):
     if option == CropOptions.MAP:
         mapArr = cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
         
-        return cv2.resize(mapArr, constants.Crops.DESIRED_SIZE)
+        return cv2.resize(mapArr, Constants.Crops.DESIRED_SIZE)
     
     elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
     
     elif option == CropOptions.BOUNTY_1_NUMBERS:
-        return cropArray(arr, Crops.ULTRA_BOUNTY_1_NUMS if isArrUltra else Crops.NORM_BOUNTY_1_NUMS)
+        return cropArray(arr, Crops.ULTRA_BOUNTY_1_NUMS if isArrUltra else Crops.NORMAL_BOUNTY_1_NUMS)
     
     elif option == CropOptions.BOUNTY_1_PHASE:
-        return cropArray(arr, Crops.ULTRA_BOUNTY_1_PHASE if isArrUltra else Crops.NORM_BOUNTY_1_PHASE)
+        return cropArray(arr, Crops.ULTRA_BOUNTY_1_PHASE if isArrUltra else Crops.NORMAL_BOUNTY_1_PHASE)
     
     elif option == CropOptions.BOUNTY_2_NUMBERS:
-        return cropArray(arr, Crops.ULTRA_BOUNTY_2_NUMS if isArrUltra else Crops.NORM_BOUNTY_2_NUMS)
+        return cropArray(arr, Crops.ULTRA_BOUNTY_2_NUMS if isArrUltra else Crops.NORMAL_BOUNTY_2_NUMS)
     
     elif option == CropOptions.BOUNTY_2_PHASE:
-        return cropArray(arr, Crops.ULTRA_BOUNTY_2_PHASE if isArrUltra else Crops.NORM_BOUNTY_2_PHASE)
+        return cropArray(arr, Crops.ULTRA_BOUNTY_2_PHASE if isArrUltra else Crops.NORMAL_BOUNTY_2_PHASE)
         
 
 def loadImage(file, grayscale = False):
@@ -167,9 +168,9 @@ def loadImage(file, grayscale = False):
 def getMap(file, resize = True, grayscale = False):
     arr = loadImage(file, grayscale)
     
-    arr = cropForItem(arr, "map")
+    arr = cropForItem(arr, CropOptions.MAP)
     
-    if resize: arr = cv2.resize(arr, DESIRED_SIZE)
+    if resize: arr = cv2.resize(arr, Constants.Crops.DESIRED_SIZE)
     
     return arr
 
@@ -202,8 +203,10 @@ def isPointInMask(mask, point: tuple):
     return mask[point[1], point[0]] == 255
 
 
-def getCompoundCountInBounty(mapArr, compounds):
+def getCompoundCountInBounty(mapArr, compounds) -> Constants.BountyPhases:
     maskedImage = getCompoundMask(mapArr)
+    
+    saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
 
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
@@ -213,7 +216,9 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
     
     croppedImage = cropForItem(image, CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
     
-    nums = getText(croppedImage)
+    grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+    
+    nums = getText(grayImage)
     
     try:
     
@@ -223,19 +228,39 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
         
         return -1
 
-def getNumberOfBounties(image : COLORED_IMAGE) -> int:
+def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount:
     """Returns the number of bounties on the map."""
     total = 0
     
-    if getBountyPhase(image, 1) != -1:
+    if checkBountyPhaseSymbol(image, 1) != -1:
         total += 1
         
-    if getBountyPhase(image, 2) != -1:
+    if checkBountyPhaseSymbol(image, 2) != -1:
         total += 1
         
     assert total > 0 and total < 3
     
-    return constants.BountyCount(total)
+    return Constants.BountyCount(total)
+
+def brightenImage(arr, hMult, sMult, vMult):
+    hsv = cv2.cvtColor(arr, cv2.COLOR_BGR2HSV)
+    
+    h, s, v = cv2.split(hsv) # Up sat and brightness
+    
+    h = cv2.multiply(h, hMult)
+    h = np.mod(h, 180)
+    
+    s = cv2.multiply(s, sMult)
+    s = np.clip(s, 0, 255)
+    
+    v = cv2.multiply(v, vMult)
+    v = np.clip(v, 0, 255)
+    
+    hsv = cv2.merge([h, s, v])
+    
+    image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    
+    return image
 
 def getBountyZone(mapArr : COLORED_IMAGE):
     hsv = cv2.cvtColor(mapArr, cv2.COLOR_BGR2HSV)
@@ -290,7 +315,7 @@ def fillInside(arr):
     
     return filled_mask
 
-def getCompoundMask(arr) -> constants.GRAYSCALE_IMAGE:
+def getCompoundMask(arr) -> Constants.GRAYSCALE_IMAGE:
     arr = getBountyZone(arr)
     return fillInside(arr)
 
@@ -301,15 +326,17 @@ def drawPoints(arr, points):
         
     return arr
 
+def checkBountyPhaseSymbol(arr, symbol = 1):
+    """Returns true if the bounty phase symbol is present in the image."""
+    
+    croppedImage = cropForItem(arr, CropOptions.BOUNTY_1_PHASE if symbol == 1 else CropOptions.BOUNTY_2_PHASE)
+    
+    grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+    
+    return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES
+
 if __name__ == "__main__":
-    image = loadImage(r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson 3C.jpg')
-    
-    m = cropForItem(image, CropOptions.MAP)
-    
-    tmp = getCompoundMask(m)
-    
-    saveImage(drawPoints(tmp, Lawson.getTownTuples()), r'/mnt/e/replays/Hunt Showdown/Map/testing/images/points.jpg')
-    
-    print(getCompoundCountInBounty(m, Lawson.getTownTuples()))
+    image = getMap(r'/home/oliver/images/coppedMaps/stillwater_full.jpg')
+    saveImage(image, r'/home/oliver/images/coppedMaps/stillwater_cropped.jpeg')
     
     

@@ -60,6 +60,9 @@ class User(Base):
     name: Mapped[str]  = mapped_column(unique=True)
     images: Mapped[List['Image']] = relationship(back_populates="user")
     
+    primary_phases: Mapped[List['PrimaryPhase']] = relationship(back_populates="user")
+    
+    
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.name!r}"
     
@@ -78,6 +81,7 @@ class Image(Base):
     is_primary: Mapped[bool] = mapped_column(default=False)
     phase: Mapped[Optional['Phase']] = relationship(back_populates="image") 
     primary_phase: Mapped[Optional['PrimaryPhase']] = relationship(back_populates="image")
+    
     
     def __repr__(self) -> str:
         return f"Image(id={self.id!r}, name={self.name!r}"
@@ -101,6 +105,9 @@ class PrimaryPhase(Base):
     
     image_id: Mapped[int] = mapped_column(ForeignKey("image.id"))
     image: Mapped[Image] = relationship(back_populates="primary_phase")
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped[User] = relationship(back_populates="primary_phases")
     
     
 class Phase(Base):
