@@ -28,6 +28,9 @@ class Screenshot():
         if ar == Fraction(16,9):
             return cv2.resize(self.screenshot, (1920, 1080))
         
+        elif self.isUltra():
+            return cv2.resize(self.screenshot, (3440, 1440))
+        
         return self.screenshot
 
     def saveMap(self, fp: str) -> bool:

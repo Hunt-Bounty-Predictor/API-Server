@@ -336,7 +336,8 @@ def checkBountyPhaseSymbol(arr, symbol = 1): #
     return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = getMap(r'/home/oliver/apiServer/API-Server/defaultMaps/lawson.jpg')
-    saveImage(image, r'defaultMaps/lawson_cropped.jpg')
+    image = loadImage("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
+    image = cv2.resize(image, (2560, 1080))
+    saveImage(image, r'/home/oliver/apiServer/API-Server/tests/different_sized_images/stillwater_21.9_HD_text_coverd.jpg')
     
     
