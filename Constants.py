@@ -41,6 +41,7 @@ class Maps:
 class Lawson(Maps):
     ID = 2
     NAME = "Lawson Delta"
+    PATH = "defaultMaps/lawson.jpg"
     
     GOLDEN = Town(name="Golden Acres", x=424, y=100)
     SALTERS = Town(name="Salter's Pork", x=584, y=125)
@@ -66,6 +67,7 @@ class Lawson(Maps):
 class Stillwater(Maps):
     ID = 3
     NAME = "Stillwater Bayou"
+    PATH = "defaultMaps/stillwater.jpg"
     
     ALAINS = Town(name="Alain & Sons Fish", x = 82, y=95)
     REYNARD = Town(name="Reynard Mill", x = 232, y = 87)
@@ -91,6 +93,7 @@ class Stillwater(Maps):
 class Desalle(Maps):
     ID = 1
     NAME = "Desalle"
+    PATH = "defaultMaps/desalle.jpg"
     
     KINGSNAKE = Town(name="Kingsnake Mine", x = 79, y = 128)
     COAL = Town(name="Stanley Coal Company", x= 246, y = 126)
@@ -119,15 +122,15 @@ class Crops:
     ULTRAwidth = 926
     ULTRAheight = 75
 
-    NORMx = 608
-    NORMy = 115
-    NORMwidth = 699
-    NORMheight = 71
+    NORMx = 630
+    NORMy = 140
+    NORMwidth = 680
+    NORMheight = 50
     
     ULTRA_MAP_NAME = (ULTRAx, ULTRAy, ULTRAx + ULTRAwidth, ULTRAy + ULTRAheight)
     NORM_MAP_NAME = (NORMx, NORMy, NORMx + NORMwidth, NORMy + NORMheight)
-    NORM_MAP = (600, 190, 600 +  720, 190 + 720)
-    ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
+    NORM_MAP = (600, 190, 600 +  717, 190 + 717)
+    ULTRA_MAP = (1240, 255, 1240 + 955, 255 + 955)
     
     ULTRA_BOUNTY_1_NUMS = (139, 130, 139 + 72, 130 + 38)
     ULTRA_BOUNTY_1_PHASE = (74, 82, 74 + 28, 82 + 40)
@@ -140,7 +143,8 @@ class Crops:
     
     NORMAL_BOUNTY_2_NUMS = (100, 195, 100 + 58, 195 + 25)
     NORMAL_BOUNTY_2_PHASE = (53, 156, 53 + 25, 156 + 25)
-    
+
+class Sizes():
     DESIRED_SIZE = (700, 700)
     
 from enum import Enum
@@ -154,10 +158,10 @@ class CropOptions(Enum):
     BOUNTY_2_PHASE = 6
     
 class BountyPhases(Enum):
-    NO_CLUES = 0
+    NO_CLUE = 0
     ONE_CLUE = 1
-    TWO_CLUES = 2
-    THREE_CLUES = 3
+    TWO_CLUE = 2
+    THREE_CLUE = 3
     
 class BountyCount(Enum):
     ONE = 1
@@ -169,7 +173,3 @@ COLORED_IMAGE = numpy.ndarray[Literal[3]]
 GRAYSCALE_IMAGE = numpy.ndarray[Literal[2]]
 
 BOUNTY_SYMBOL_THRES = 100
-    
-    
-#print(Lawson.getTowns())
-#print(Maps.getMaps())

@@ -40,10 +40,10 @@ from Constants import Lawson
 
 #from scripts import populateTownsLawson
 
-def cropArray(arr, crop):
+def cropArray(arr, crop): #
     return arr[crop[1]:crop[3], crop[0]:crop[2]]
 
-def getMostSimilarText(text):
+def getMostSimilarText(text): #
     text = text.lower()
     names = {
         "stillwater bayou",
@@ -66,10 +66,10 @@ def showImage(arr):
     # closing all open windows
     cv2.destroyAllWindows()
     
-def getText(arr) -> str:
+def getText(arr) -> str: #
     return pt.image_to_string(arr)
 
-def getmapNameBasedOnText(arr):
+def getmapNameBasedOnText(arr): #
             
     text = pt.image_to_string(arr)
     
@@ -79,7 +79,7 @@ def getmapNameBasedOnText(arr):
         
     return text
 
-def compareImages(image1, image2):
+def compareImages(image1, image2): #
 
     grayA = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
@@ -88,7 +88,7 @@ def compareImages(image1, image2):
     
     return score
 
-def isUltra(arr):
+def isUltra(arr): #
     height, width = arr.shape[:2]
 
     aspectRatio = Fraction(width, height)
@@ -106,7 +106,7 @@ def isUltra(arr):
         raise InvalidAspectRatio(message = str(arr.shape[:2]))
     
     
-def getMapNameBasedOnImage(arr, imagePath):
+def getMapNameBasedOnImage(arr, imagePath): 
     for imageName in os.listdir(imagePath):
         image = cv2.imread(imagePath + imageName)
         
@@ -137,14 +137,14 @@ def getMapName(uncroppedImage):
         return getMapNameBasedOnImage(uncroppedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/defaultMaps/')
     
 
-def cropForItem(arr, option : str):
+def cropForItem(arr, option : str): #
     
     isArrUltra = isUltra(arr)
 
     if option == CropOptions.MAP:
         mapArr = cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
         
-        return cv2.resize(mapArr, Constants.Crops.DESIRED_SIZE)
+        return cv2.resize(mapArr, Constants.Sizes.DESIRED_SIZE)
     
     elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
@@ -162,15 +162,15 @@ def cropForItem(arr, option : str):
         return cropArray(arr, Crops.ULTRA_BOUNTY_2_PHASE if isArrUltra else Crops.NORMAL_BOUNTY_2_PHASE)
         
 
-def loadImage(file, grayscale = False):
+def loadImage(file, grayscale = False): #
     return cv2.imread(file) if not grayscale else cv2.imread(file, cv2.IMREAD_GRAYSCALE)
 
-def getMap(file, resize = True, grayscale = False):
+def getMap(file, resize = True, grayscale = False): #
     arr = loadImage(file, grayscale)
     
     arr = cropForItem(arr, CropOptions.MAP)
     
-    if resize: arr = cv2.resize(arr, Constants.Crops.DESIRED_SIZE)
+    if resize: arr = cv2.resize(arr, Constants.Sizes.DESIRED_SIZE)
     
     return arr
 
@@ -210,7 +210,7 @@ def getCompoundCountInBounty(mapArr, compounds) -> Constants.BountyPhases:
 
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
-def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:
+def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:  
     
     """Returns the phase of the bounty based on the number of clues collected for the bounty."""
     
@@ -228,7 +228,7 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
         
         return -1
 
-def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount:
+def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount: #
     """Returns the number of bounties on the map."""
     total = 0
     
@@ -326,7 +326,7 @@ def drawPoints(arr, points):
         
     return arr
 
-def checkBountyPhaseSymbol(arr, symbol = 1):
+def checkBountyPhaseSymbol(arr, symbol = 1): #
     """Returns true if the bounty phase symbol is present in the image."""
     
     croppedImage = cropForItem(arr, CropOptions.BOUNTY_1_PHASE if symbol == 1 else CropOptions.BOUNTY_2_PHASE)
@@ -336,7 +336,7 @@ def checkBountyPhaseSymbol(arr, symbol = 1):
     return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = getMap(r'/home/oliver/images/coppedMaps/stillwater_full.jpg')
-    saveImage(image, r'/home/oliver/images/coppedMaps/stillwater_cropped.jpeg')
+    image = getMap(r'/home/oliver/apiServer/API-Server/defaultMaps/lawson.jpg')
+    saveImage(image, r'defaultMaps/lawson_cropped.jpg')
     
     
