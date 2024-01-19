@@ -193,3 +193,40 @@ def testGetMapFromImage():
     
     ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
     assert(ss.getMapNameFromImage() == Constants.Stillwater)
+
+def testGetMapName():
+    ss = Screenshot(desalle_21_9_2B.FILEPATH)
+    assert(ss.getMapName() == Constants.Desalle)
+    
+    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
+    assert(ss.getMapName() == Constants.Stillwater)
+    
+    ss = Screenshot("tests/map_comparision_tests/desalle_21.9_2B.jpg")
+    assert(ss.getMapName() == Constants.Desalle)
+    
+    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_1B.jpg")
+    assert(ss.getMapName() == Constants.Lawson)
+    
+    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_2B.jpg")
+    assert(ss.getMapName() == Constants.Lawson)
+    
+    ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
+    assert(ss.getMapName() == Constants.Stillwater)
+    
+    ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
+    assert(ss.getMapName() == Constants.Stillwater)
+    
+    ss = Screenshot("tests/map_comparision_tests/desalle_21.9_2B.jpg")
+    assert(ss.getMapName() == Constants.Desalle)
+    
+#________________________________________________________
+    
+def testGetCompoundCount():
+    ss = Screenshot(desalle_21_9_2B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Desalle.getTownTuples()) == 16)
+    
+    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Stillwater.getTownTuples()) == 6)
+    
+    ss = Screenshot(lawson_21_9_2B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Lawson.getTownTuples()) == 16)
