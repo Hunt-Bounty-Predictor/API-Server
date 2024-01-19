@@ -133,13 +133,11 @@ class Screenshot():
         """
         aspectRatio = self.getAspectRatio()
         
-        if aspectRatio == Fraction(21, 9) or \
-            aspectRatio == Fraction(43, 18) or \
-            aspectRatio == Fraction(64, 27):
+        if aspectRatio in Constants.ULTRA_WIDE.getRatios():
                 
             return True
             
-        elif aspectRatio == Fraction(16, 9):
+        elif aspectRatio in Constants.NORMAL.getRatios():
             return False
         
     def getAspectRatio(self) -> Fraction:
@@ -369,16 +367,16 @@ class Screenshot():
         map2 = screenshot.getMap()
         return self.compareImages(map1, map2) > thres
     
-    def checkBountySymbol(self, symbol: Constants.BountyPhases = Constants.BountyPhases.ONE_CLUE) -> bool:
+    def checkBountySymbol(self, bounty: int = 1) -> bool:
         """Check if a bounty exists. This should help you determine how many bountys are on a map.
 
         Args:
-            symbol (Constants.BountyPhases, optional): Defaults to Constants.BountyPhases.ONE_CLUE. The bounty to check. There are at most 2.
+            bounty (int, optional): Defaults to 1. The bounty to check. There are at most 2.
 
         Returns:
             bool: If that bounty exists.
         """
-        crop = Constants.CropOptions.BOUNTY_1_PHASE if symbol == Constants.BountyPhases.ONE_CLUE else Constants.CropOptions.BOUNTY_2_PHASE
+        crop = Constants.CropOptions.BOUNTY_1_PHASE if bounty == 1 else Constants.CropOptions.BOUNTY_2_PHASE
         croppedImage = self.cropArray(crop)
     
         grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
@@ -386,21 +384,21 @@ class Screenshot():
         return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES 
         # The bounty symbols are a light grey surrounded by a dark grey. 
     
-    def getBountyTotal(self) -> Constants.BountyCount:
+    def getBountyTotal(self) -> int:
         """Gets the total number of bountys on the map.
 
         Returns:
-            constants.BountyCount: The total number of bountys on the map.
+            int: The total number of bountys on the map.
         """
         total = 0
 
-        if self.checkBountySymbol(Constants.BountyPhases.ONE_CLUE):
+        if self.checkBountySymbol(1):
             total += 1
 
-        if self.checkBountySymbol(Constants.BountyPhases.TWO_CLUE):
+        if self.checkBountySymbol(2):
             total += 1
 
-        return Constants.BountyCount(total)
+        return total
     
     def getPhaseNumber(self, bountyNumber: int = 1) -> int:
         """Attempts to get the number of clues gathered for a given bounty.
@@ -423,6 +421,9 @@ class Screenshot():
             return int(re.search(r"([0-3]+)", nums).group(1))
         
         except AttributeError:
+            
+            if self.checkBountySymbol(bountyNumber):
+                return 3
             
             return -1
 
