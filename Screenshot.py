@@ -6,6 +6,18 @@ import Constants
 
 class Screenshot():
     def __init__(self, screenshot: Union[str, bytes], grayscale = False):
+        """Create a screenshot based on either a filepath or a bytes object.
+
+        Args:
+            screenshot (Union[str, bytes]): The screenshot to load. 
+            It can either be a bytes object (From an api upload ;)) 
+            or a filepath on the local system.
+
+            grayscale (bool, optional): Defaults to False. Whether or not to load the image in grayscale.
+
+        Raises:
+            TypeError: Raised if the passed in screenshot is not a string or bytes.
+        """
         if isinstance(screenshot, str):
             self.screenshot = self._loadImage(screenshot, grayscale)
         elif isinstance(screenshot, bytes):
@@ -17,12 +29,25 @@ class Screenshot():
         else:
             raise TypeError("Screenshot must be either a string or bytes.")
                 
-        self.screenshot = self.scaleMap()
+        self.screenshot = self.scaleMap() # We need to ensure a standard size so we do not need
+                                          # to maintain multiple crops and bounty locations.
     
-    def getScreenshot(self) -> Constants.COLORED_IMAGE:
+    def getScreenshot(self) -> np.ndarray:
+        """Returns the screenshot within. Represented as a numpy array.
+
+        Returns:
+            Constants.COLORED_IMAGE: Numpy array representing the screenshot, Can be either grayscale or color.
+        """
         return self.screenshot
                 
-    def scaleMap(self):        
+    def scaleMap(self) -> np.ndarray:     
+        """Scales the map to a standard size. 
+        These standard sizes are 1920x1080 for 16:9 and 3440x1440 for 21:9.
+        Our goal is to have a standard size so we do not need to maintain multiple crops and bounty locations.
+
+        Returns:
+            np.ndarray: The image that is resized.
+        """
         ar = self.getAspectRatio()
         
         if ar == Fraction(16,9):
@@ -31,21 +56,48 @@ class Screenshot():
         elif self.isUltra():
             return cv2.resize(self.screenshot, (3440, 1440))
         
-        return self.screenshot
+        return self.screenshot # Already a valid size
 
     def saveMap(self, fp: str) -> bool:
+        """Save the current screenshot to a file.
+
+        Args:
+            fp (str): The filepath the screenshot will be saved to.
+
+        Returns:
+            bool: if the saving was successful.
+        """
         try:
-            saveImage(self.screenshot, fp)
+            cv2.imwrite(self.getScreenshot(), fp)
         except Exception as e:
             return False
         
         return True
     
     def _loadImage(self, fp: str, grayscale = False) -> np.ndarray:
+        """Loads an image from a filepath.
+
+        Args:
+            fp (str): The filepath of the image to load
+            grayscale (bool, optional): Defaults to False. Should the image be loaded in grayscale
+
+        Returns:
+            np.ndarray: The image that was loaded.
+        """
         image = cv2.imread(fp, cv2.IMREAD_GRAYSCALE if grayscale else cv2.IMREAD_COLOR)
         return image
 
-    def cropArray(self, target: Constants.CropOptions):
+    def cropArray(self, target: Constants.CropOptions) -> np.ndarray:
+        """Crops the current screenshot based on the target.
+
+        Args:
+            target (Constants.CropOptions): The target to crop the screenshot to.
+            There are a number of options.
+            Please view the CropOptions enum for more information.
+
+        Returns:
+            np.ndarray: The resulting cropped image. 
+        """
         isUltra = self.isUltra()
         
         match target:
@@ -70,6 +122,15 @@ class Screenshot():
         return self.getScreenshot()[crop[1]:crop[3], crop[0]:crop[2]]
 
     def isUltra(self) -> bool:
+        """Determines if the image is an ultrawide image. (21:9 aspect ratio)
+
+        Detects HD, FHD, QHD, and UHD (21:9, 43:18, 64:27) ultrawide images.
+
+        All other ratios are considered non Ultrawide.
+
+        Returns:
+            bool: If the image is an ultrawide image.
+        """
         aspectRatio = self.getAspectRatio()
         
         if aspectRatio == Fraction(21, 9) or \
@@ -82,23 +143,67 @@ class Screenshot():
             return False
         
     def getAspectRatio(self) -> Fraction:
+        """Returns the aspect ratio of the image in the form of a fraction.
+
+        Returns:
+            Fraction: The aspect ratio of the image. The numerator is the width and the denominator is the height.
+        """
         height, width = self.getScreenshot().shape[:2]
 
         return Fraction(width, height)
     
     def getScreenshot(self) -> np.ndarray:
+        """Returns the screenshot within. Represented as a numpy array.
+
+        Returns:
+            np.ndarray: The current image loaded.
+        """
         return self.screenshot
 
     def getMap(self, resize = True) -> np.ndarray:
+        """Gets the current map in the screenshot. Determines the crop location for you.
+
+        Args:
+            resize (bool, optional): _description_. Defaults to True.
+            This is if the cropped map should be resized to the standard Constants.Sizes.DESIRED_SIZE.
+
+        Returns:
+            np.ndarray: The map within the screenshot.
+        """
         tmpMap = self.cropArray(Constants.CropOptions.MAP)
         return Screenshot.resize(tmpMap, Constants.Sizes.DESIRED_SIZE) if resize else tmpMap
 
     @staticmethod
     def resize(arr, size: Constants.Sizes) -> np.ndarray:
+        """Resizes the given image to the given size.
+
+        Args:
+            arr (_type_): The image to resize
+            size (Constants.Sizes): The size to resize it to.
+
+        Returns:
+            np.ndarray: The resized image.
+        """
         return cv2.resize(arr, size)
     
-    def getMapNameFromText(self) -> Optional[str]:
-        def getMostSimilarText(text):
+    def getMapNameFromText(self) -> Optional[Constants.Maps]:
+        """Gets the name of the map based on the map name at the top of the map.
+        Sometimes this text may be obstructed by the bounty UI.
+        So you may need to utilize image comparision to get the map name.
+
+        Returns:
+            Optional[Constants.Maps]: The map name if it was found. None otherwise.
+        """
+        def getMostSimilarText(text: str) -> Optional[Constants.Maps]:
+            """Tries to find the most similar text to the given text.
+            Sometimes the text given may not be the exact text of the map name.
+
+            Args:
+                text (str): The text to compare to the map names.
+
+            Returns:
+                Optional[Constants.Maps]: The map name if it was found. None otherwise.
+            """
             text = text.lower()
             maps : List[Screenshot] = [
                 Constants.Stillwater,
@@ -107,14 +212,15 @@ class Screenshot():
             ]
             
             for m in maps:
-                if SequenceMatcher(None, text, m.NAME).ratio() > 0.8:
+                if SequenceMatcher(None, text, m.NAME).ratio() > 0.8: # Magic number :) 
+                                                                      # Essentially if the text is 80% similar to the map name.
                     return m
                 
             return None
         
         croppedImage = self.cropArray(Constants.CropOptions.NAME)
 
-        croppedImage = Screenshot.brightenImage(croppedImage, 1, 3, 2)
+        croppedImage = Screenshot.brightenImage(croppedImage, 1, 3, 2) # Brighten the image to make the text more readable.
         
         text = pt.image_to_string(croppedImage)
         
@@ -129,6 +235,14 @@ class Screenshot():
         return None
     
     def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
+        """_summary_
+
+        Args:
+            thres (float, optional): _description_. Defaults to 0.6.
+
+        Returns:
+            Optional[Constants.Maps]: _description_
+        """
         best = -1
         bestName = None
         for name, ss in MAPS.items():
@@ -152,6 +266,13 @@ class Screenshot():
         return None
     
     def getMapName(self) -> Optional[Constants.Maps]:
+        """Attempts to get the map name.
+        This First attempts to get the map name from the text.
+        Then it tries image comparision to get the map name.
+
+        Returns:
+            Optional[Constants.Maps]: The name of the given map. None if the map name could not be found.
+        """
         map = self.getMapNameFromText()
         if not map:
             map = self.getMapNameFromImage()
@@ -160,7 +281,19 @@ class Screenshot():
     
     
     @staticmethod
-    def brightenImage(arr : Constants.COLORED_IMAGE, hMult = 1, sMult = 3, vMult = 2):
+    def brightenImage(arr : Constants.COLORED_IMAGE, hMult = 1, sMult = 3, vMult = 2) -> Constants.COLORED_IMAGE:
+        """Adjust an image in the HSV color space.
+        The default values brighten an image.
+
+        Args:
+            arr (Constants.COLORED_IMAGE): The image to brighten.
+            hMult (int, optional): _description_. Defaults to 1. Hue
+            sMult (int, optional): _description_. Defaults to 3. Saturation
+            vMult (int, optional): _description_. Defaults to 2. Value
+
+        Returns:
+            Constants.COLORED_IMAGE: The brightened image.
+        """
         hsv = cv2.cvtColor(arr, cv2.COLOR_BGR2HSV)
         
         h, s, v = cv2.split(hsv) # Up sat and brightness
@@ -182,6 +315,17 @@ class Screenshot():
 
     @staticmethod
     def compareImages(arr1: Constants.COLORED_IMAGE, arr2: Constants.COLORED_IMAGE) -> float:
+        """Compares two images using the SSIM algorithm.
+        The images must be the same size.
+
+
+        Args:
+            arr1 (Constants.COLORED_IMAGE): The first image to compare.
+            arr2 (Constants.COLORED_IMAGE): The second image to compare.
+
+        Returns:
+            float: The similarity of the two images. 1.0 is the same image.
+        """
         grayA = cv2.cvtColor(arr1, cv2.COLOR_BGR2GRAY)
         grayB = cv2.cvtColor(arr2, cv2.COLOR_BGR2GRAY)
         
@@ -191,6 +335,15 @@ class Screenshot():
     
     @staticmethod
     def saveImage(arr: Constants.COLORED_IMAGE, fp: str) -> bool:
+        """Saves an image to a file.
+
+        Args:
+            arr (Constants.COLORED_IMAGE): The image to save
+            fp (str): The filepath to save the image to.
+
+        Returns:
+            bool: If the saving was successful.
+        """
         try:
             cv2.imwrite(fp, arr)
         except Exception as e:
@@ -199,6 +352,19 @@ class Screenshot():
         return True
     
     def areMapsTheSame(self, screenshot: "Screenshot", thres: float = 0.6) -> bool:
+        """Determines if the current screenshot is the same as the given screenshot.
+
+        Right now it it crops the maps out automatically and compares them.
+
+        _This needs to be moved to a static method or a new class based on only maps_
+
+        Args:
+            screenshot (Screenshot): The screenshot to compare too.
+            thres (float, optional): Defaults to 0.6. What is the threshold for the images to be considered the same.
+
+        Returns:
+            bool: If the maps are the same
+        """
         map1 = self.getMap()
         map2 = screenshot.getMap()
         return self.compareImages(map1, map2) > thres
