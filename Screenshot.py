@@ -414,8 +414,6 @@ class Screenshot():
     
         croppedImage = self.cropArray(CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
         
-        self.saveImage(croppedImage, str(bountyNumber) + "test.png")
-        
         grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
         
         nums = getText(grayImage)

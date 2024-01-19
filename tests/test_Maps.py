@@ -1,9 +1,10 @@
+import pytest
 from Screenshot import Screenshot
 import Constants
 import fractions
-from tests.MapInfo import desalle_16_9_2B, desalle_21_9_2B, stillwater_16_9_1B, stillwater_21_9_2B, lawson_21_9_1B, lawson_21_9_2B
+from tests.MapInfo import TestMap, desalle_16_9_2B, desalle_21_9_2B, stillwater_16_9_1B, stillwater_21_9_2B, lawson_21_9_1B, lawson_21_9_2B, testing_maps
 
-
+ids = [map.NAME for map in testing_maps]
 
 def testMapCreationFromFile():
     map = Screenshot(desalle_21_9_2B.FILEPATH)
@@ -73,6 +74,9 @@ def testIsUltra():
 #_______________________________________________________
 
 def testGetMapNameWithText():
+    for map in [stillwater_16_9_1B, desalle_21_9_2B, desalle_16_9_2B]:
+        assert map.testGetMapNameWithText()
+
     map = Screenshot(stillwater_16_9_1B.FILEPATH)
     
     assert(map.getMapNameFromText() == Constants.Stillwater)
@@ -132,45 +136,14 @@ def testGetBountyPhase():
 
     assert (ss.checkBountySymbol(Constants.BountyPhases.TWO_CLUE) == False)
 
-def testBountyCount():
-    ss = Screenshot(desalle_21_9_2B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.TWO)
-
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.ONE)
-
-    ss = Screenshot(desalle_16_9_2B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.TWO)
-    
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_bounty_count(test_map : TestMap):
+    assert test_map.testBountyCount()
 #________________________________________________________
 
-def testPhaseDetection():
-    ss = Screenshot(lawson_21_9_1B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 0)
-    
-    assert(ss.getPhaseNumber(2) == -1)
-    
-    ss = Screenshot(lawson_21_9_2B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 0)
-    
-    assert(ss.getPhaseNumber(2) == 0)
-    
-    ss = Screenshot(desalle_16_9_2B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == -1)
-    
-    assert(ss.getPhaseNumber(2) == -1)
-    
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 2)
-    
-    assert(ss.getPhaseNumber(2) == -1)
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_get_bounty_phase(test_map : TestMap):
+    assert test_map.testPhaseDetection()
     
 #________________________________________________________
 
