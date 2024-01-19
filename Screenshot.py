@@ -1,5 +1,5 @@
 from image_processing import *
-from typing import List, Optional, Union, Literal
+from typing import List, Optional, Tuple, Union, Literal
 import numpy as np
 import cv2
 import Constants
@@ -370,14 +370,28 @@ class Screenshot():
         return self.compareImages(map1, map2) > thres
     
     def checkBountySymbol(self, symbol: Constants.BountyPhases = Constants.BountyPhases.ONE_CLUE) -> bool:
+        """Check if a bounty exists. This should help you determine how many bountys are on a map.
+
+        Args:
+            symbol (Constants.BountyPhases, optional): Defaults to Constants.BountyPhases.ONE_CLUE. The bounty to check. There are at most 2.
+
+        Returns:
+            bool: If that bounty exists.
+        """
         crop = Constants.CropOptions.BOUNTY_1_PHASE if symbol == Constants.BountyPhases.ONE_CLUE else Constants.CropOptions.BOUNTY_2_PHASE
         croppedImage = self.cropArray(crop)
     
         grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
         
         return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES 
+        # The bounty symbols are a light grey surrounded by a dark grey. 
     
-    def getBountyTotal(self):
+    def getBountyTotal(self) -> Constants.BountyCount:
+        """Gets the total number of bountys on the map.
+
+        Returns:
+            constants.BountyCount: The total number of bountys on the map.
+        """
         total = 0
 
         if self.checkBountySymbol(Constants.BountyPhases.ONE_CLUE):
@@ -389,7 +403,14 @@ class Screenshot():
         return Constants.BountyCount(total)
     
     def getPhaseNumber(self, bountyNumber: int = 1) -> int:
-        """Returns the phase of the bounty based on the number of clues collected for the bounty."""
+        """Attempts to get the number of clues gathered for a given bounty.
+
+        Args:
+            bountyNumber (int, optional): Defaults to 1. The bounty to check.
+
+        Returns:
+            int: The number of clues gathered for the given bounty.
+        """
     
         croppedImage = self.cropArray(CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
         
@@ -409,7 +430,12 @@ class Screenshot():
 
 
     
-    def getBountyZone(self):
+    def getBountyZone(self) -> np.ndarray:
+        """Determines the bounty zone on the map. This is the area the bounty can be found in.
+
+        Returns:
+            np.ndarray: The mask of the bounty zone.
+        """
         hsv = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2HSV)
     
         h, s, v = cv2.split(hsv) # Up sat and brightness
@@ -439,9 +465,14 @@ class Screenshot():
         
         return emptyMask
     
-    def fillInside(self):
+    def fillInside(self, arr: np.ndarray) -> np.ndarray:
+        """Fills the inside of given image with a large polygon.
+
+        Returns:
+            np.ndarray: The filled image.
+        """
         # Convert to grayscale
-        gray = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
         
         # Threshold the image to get a binary image
         _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
@@ -460,16 +491,35 @@ class Screenshot():
         
         return filled_mask
     
-    def getCompoundMask(self):
+    def getCompoundMask(self) -> np.ndarray:
+        """Gets the mask of a map on in the screenshot.
+        Useful for determining if a compound is in the bounty zone.
+
+        Returns:
+            np.ndarray: The filled in mask of the map.
+        """
         arr = self.getBountyZone()
-        return fillInside(arr)    
+        return self.fillInside(arr)    
    
     @staticmethod 
-    def isPointInMask(mask, point: tuple):
+    def isPointInMask(mask, point: tuple) -> bool:
+        """Detrmines if a point is in a mask.
+
+        Returns:
+            bool: If the point is in the mask.
+        """
         return mask[point[1], point[0]] == 255
 
 
-    def getCompoundCountInBounty(self, compounds) -> Constants.BountyPhases:
+    def getCompoundCountInBounty(self, compounds : Tuple[int, int]) -> int:
+        """Counts the number of compounds in the bounty zone.
+
+        Args:
+            compounds (Tuple[int, int]): The compunds to count
+
+        Returns:
+            int: The number of compounds in the bounty zone.
+        """
         maskedImage = self.getCompoundMask()
 
         return sum([Screenshot.isPointInMask(maskedImage, point) for point in compounds])
