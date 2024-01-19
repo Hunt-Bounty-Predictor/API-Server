@@ -91,7 +91,7 @@ class Screenshot():
     def resize(arr, size: Constants.Sizes) -> np.ndarray:
         return cv2.resize(arr, size)
     
-    def getMapName(self) -> Optional[str]:
+    def getMapNameFromText(self) -> Optional[str]:
         def getMostSimilarText(text):
             text = text.lower()
             maps : List[Screenshot] = [
@@ -107,9 +107,11 @@ class Screenshot():
             return None
         
         croppedImage = self.cropArray(Constants.CropOptions.NAME)
+
+        croppedImage = Screenshot.brightenImage(croppedImage, 1, 3, 2)
         
         text = pt.image_to_string(croppedImage)
-    
+        
         lines = text.splitlines()
         
         for line in lines:
@@ -119,6 +121,27 @@ class Screenshot():
                 return text
             
         return None
+    
+    @staticmethod
+    def brightenImage(arr : Constants.COLORED_IMAGE, hMult = 1, sMult = 3, vMult = 2):
+        hsv = cv2.cvtColor(arr, cv2.COLOR_BGR2HSV)
+        
+        h, s, v = cv2.split(hsv) # Up sat and brightness
+        
+        h = cv2.multiply(h, hMult)
+        h = np.mod(h, 180)
+        
+        s = cv2.multiply(s, sMult)
+        s = np.clip(s, 0, 255)
+        
+        v = cv2.multiply(v, vMult)
+        v = np.clip(v, 0, 255)
+        
+        hsv = cv2.merge([h, s, v])
+        
+        image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        
+        return image
 
     @staticmethod
     def compareImages(arr1: Constants.COLORED_IMAGE, arr2: Constants.COLORED_IMAGE) -> float:
@@ -236,3 +259,29 @@ class Screenshot():
         except AttributeError:
             
             return -1
+
+    def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
+        best = -1
+        bestName = None
+        for name, ss in MAPS.items():
+            try:
+                result = compareImages(self.getMap(), ss.getMap())
+                if result > best:
+                    best = result
+                    bestName = name
+            except:
+                pass
+            
+        if bestName and best > thres:
+            match bestName:
+                case Constants.Lawson.NAME:
+                    return Constants.Lawson
+                case Constants.Desalle.NAME:
+                    return Constants.Desalle
+                case Constants.Stillwater.NAME:
+                    return Constants.Stillwater
+                
+        return None
+    
+MAPS = {map.NAME : Screenshot(map.PATH) for map in [Constants.Lawson, Constants.Desalle, Constants.Stillwater]}
+            

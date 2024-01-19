@@ -144,7 +144,7 @@ def cropForItem(arr, option : str): #
     if option == CropOptions.MAP:
         mapArr = cropArray(arr, ULTRA_MAP if isArrUltra else NORM_MAP)
         
-        return cv2.resize(mapArr, Constants.Crops.DESIRED_SIZE)
+        return cv2.resize(mapArr, Constants.Sizes.DESIRED_SIZE)
     
     elif option == CropOptions.NAME:
         return cropArray(arr, ULTRA_MAP_NAME if isArrUltra else NORM_MAP_NAME)
@@ -170,7 +170,7 @@ def getMap(file, resize = True, grayscale = False): #
     
     arr = cropForItem(arr, CropOptions.MAP)
     
-    if resize: arr = cv2.resize(arr, Constants.Crops.DESIRED_SIZE)
+    if resize: arr = cv2.resize(arr, Constants.Sizes.DESIRED_SIZE)
     
     return arr
 
@@ -210,7 +210,7 @@ def getCompoundCountInBounty(mapArr, compounds) -> Constants.BountyPhases:
 
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
-def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases: 
+def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:  
     
     """Returns the phase of the bounty based on the number of clues collected for the bounty."""
     
@@ -336,7 +336,7 @@ def checkBountyPhaseSymbol(arr, symbol = 1): #
     return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES
 
 if __name__ == "__main__":
-    image = getMap(r'/home/oliver/images/coppedMaps/stillwater_full.jpg')
-    saveImage(image, r'/home/oliver/images/coppedMaps/stillwater_cropped.jpeg')
+    image = getMap(r'/home/oliver/apiServer/API-Server/defaultMaps/lawson.jpg')
+    saveImage(image, r'defaultMaps/lawson_cropped.jpg')
     
     

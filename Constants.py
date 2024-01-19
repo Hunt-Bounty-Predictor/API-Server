@@ -41,6 +41,7 @@ class Maps:
 class Lawson(Maps):
     ID = 2
     NAME = "Lawson Delta"
+    PATH = "defaultMaps/lawson.jpg"
     
     GOLDEN = Town(name="Golden Acres", x=424, y=100)
     SALTERS = Town(name="Salter's Pork", x=584, y=125)
@@ -66,6 +67,7 @@ class Lawson(Maps):
 class Stillwater(Maps):
     ID = 3
     NAME = "Stillwater Bayou"
+    PATH = "defaultMaps/stillwater.jpg"
     
     ALAINS = Town(name="Alain & Sons Fish", x = 82, y=95)
     REYNARD = Town(name="Reynard Mill", x = 232, y = 87)
@@ -91,6 +93,7 @@ class Stillwater(Maps):
 class Desalle(Maps):
     ID = 1
     NAME = "Desalle"
+    PATH = "defaultMaps/desalle.jpg"
     
     KINGSNAKE = Town(name="Kingsnake Mine", x = 79, y = 128)
     COAL = Town(name="Stanley Coal Company", x= 246, y = 126)
@@ -163,13 +166,10 @@ class BountyPhases(Enum):
 class BountyCount(Enum):
     ONE = 1
     TWO = 2
+    
 import numpy
     
 COLORED_IMAGE = numpy.ndarray[Literal[3]]
 GRAYSCALE_IMAGE = numpy.ndarray[Literal[2]]
 
 BOUNTY_SYMBOL_THRES = 100
-    
-    
-#print(Lawson.getTowns())
-#print(Maps.getMaps())

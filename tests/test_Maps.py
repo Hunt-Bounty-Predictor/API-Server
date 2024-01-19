@@ -75,15 +75,15 @@ def testIsUltra():
 def testGetMapNameWithText():
     map = Screenshot(stillwater_16_9_1B.FILEPATH)
     
-    assert(map.getMapName() == Constants.Stillwater)
+    assert(map.getMapNameFromText() == Constants.Stillwater)
     
     map = Screenshot(desalle_21_9_2B.FILEPATH)
     
-    assert(map.getMapName() == Constants.Desalle)
+    assert(map.getMapNameFromText() == Constants.Desalle)
     
     map = Screenshot(desalle_16_9_2B.FILEPATH)
     
-    assert(map.getMapName() == Constants.Desalle)
+    assert(map.getMapNameFromText() == Constants.Desalle)
 
 #________________________________________________________
 
@@ -171,3 +171,25 @@ def testPhaseDetection():
     assert(ss.getPhaseNumber(1) == 2)
     
     assert(ss.getPhaseNumber(2) == -1)
+    
+#________________________________________________________
+
+def testGetMapFromImage():
+    
+    ss = Screenshot(desalle_21_9_2B.FILEPATH)
+    assert(ss.getMapNameFromImage() == Constants.Desalle)
+    
+    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
+    assert(ss.getMapNameFromImage() == Constants.Stillwater)
+    
+    ss = Screenshot("tests/map_comparision_tests/desalle_21.9_2B.jpg")
+    assert(ss.getMapNameFromImage() == Constants.Desalle)
+    
+    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_1B.jpg")
+    assert(ss.getMapNameFromImage() == Constants.Lawson)
+    
+    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_2B.jpg")
+    assert(ss.getMapNameFromImage() == Constants.Lawson)
+    
+    ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
+    assert(ss.getMapNameFromImage() == Constants.Stillwater)
