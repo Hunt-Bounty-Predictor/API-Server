@@ -193,3 +193,13 @@ def testGetMapFromImage():
     
     ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
     assert(ss.getMapNameFromImage() == Constants.Stillwater)
+    
+def testGetCompoundCount():
+    ss = Screenshot(desalle_21_9_2B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Desalle.getTownTuples()) == 16)
+    
+    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Stillwater.getTownTuples()) == 6)
+    
+    ss = Screenshot(lawson_21_9_2B.FILEPATH)
+    assert(ss.getCompoundCountInBounty(Constants.Lawson.getTownTuples()) == 16)

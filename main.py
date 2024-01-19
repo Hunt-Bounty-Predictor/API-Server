@@ -14,6 +14,7 @@ from sqlalchemy.sql import exists
 import Constants
 from Constants import session
 import os
+from Screenshot import Screenshot
 
 
 
@@ -77,6 +78,8 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
             existingUser = session.query(scheme.User).filter_by(name=username).first() # The user is guarenteed to exits, because of the get_user dependency
             
             contents = await file.read()
+            
+            ss = Screenshot(contents)
             
             # Convert the contents to a numpy array
             nparr = np.fromstring(contents, np.uint8)
