@@ -63,7 +63,7 @@ To run the server, run the following command in the terminal:
 
 hypercorn main:app"""
 
-@app.get('/APIKey') # No depedencies needed
+@app.get('/api/APIKey') # No depedencies needed
 def getAPIKey():
     return {
         "APIKey": APIKey 
@@ -81,14 +81,13 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
             
             ss = Screenshot(contents)
             
-            # Convert the contents to a numpy array
-            nparr = np.fromstring(contents, np.uint8)
+            map = ss.getMapName()
             
-            # Decode the numpy array into an image
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if not map:
+                raise Exception("not a valid map")
             
             # Process the image
-            bountyCount = image_processing.getCompoundCountInBounty(img, Constants.Lawson.getTownTuples())
+            bountyCount = ss.getCompoundCountInBounty(map.getTownTuples())
             
             if bountyCount == 16:
                 # The image is the first image of the map
@@ -96,7 +95,7 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
                 
                 newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
                 
-                newPhase = scheme.PrimaryPhase(image=newImage, map_id = 2)
+                newPhase = scheme.PrimaryPhase(image=newImage, map_id = map.ID, user = existingUser)
                 
             else:
                 # The image is not the first image of the map
@@ -112,7 +111,7 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
                 
                 print(lastPrimaryPhase)
                 
-                newPhase = scheme.Phase(image=newImage, map_id = 2, primary_phase = lastPrimaryPhase)
+                newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, name = "Empty", phase_number = -1)
                 
             session.add(newImage)
             session.add(newPhase)

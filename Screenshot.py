@@ -125,6 +125,37 @@ class Screenshot():
             
         return None
     
+    def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
+        best = -1
+        bestName = None
+        for name, ss in MAPS.items():
+            try:
+                result = compareImages(self.getMap(), ss.getMap())
+                if result > best:
+                    best = result
+                    bestName = name
+            except:
+                pass
+            
+        if bestName and best > thres:
+            match bestName:
+                case Constants.Lawson.NAME:
+                    return Constants.Lawson
+                case Constants.Desalle.NAME:
+                    return Constants.Desalle
+                case Constants.Stillwater.NAME:
+                    return Constants.Stillwater
+                
+        return None
+    
+    def getMapName(self) -> Optional[Constants.Maps]:
+        map = self.getMapNameFromText()
+        if not map:
+            map = self.getMapNameFromImage()
+            
+        return map
+    
+    
     @staticmethod
     def brightenImage(arr : Constants.COLORED_IMAGE, hMult = 1, sMult = 3, vMult = 2):
         hsv = cv2.cvtColor(arr, cv2.COLOR_BGR2HSV)
@@ -187,9 +218,6 @@ class Screenshot():
             total += 1
 
         return Constants.BountyCount(total)
-
-    
-
     
     def getPhaseNumber(self, bountyNumber: int = 1) -> int:
         """Returns the phase of the bounty based on the number of clues collected for the bounty."""
@@ -210,28 +238,7 @@ class Screenshot():
             
             return -1
 
-    def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
-        best = -1
-        bestName = None
-        for name, ss in MAPS.items():
-            try:
-                result = compareImages(self.getMap(), ss.getMap())
-                if result > best:
-                    best = result
-                    bestName = name
-            except:
-                pass
-            
-        if bestName and best > thres:
-            match bestName:
-                case Constants.Lawson.NAME:
-                    return Constants.Lawson
-                case Constants.Desalle.NAME:
-                    return Constants.Desalle
-                case Constants.Stillwater.NAME:
-                    return Constants.Stillwater
-                
-        return None
+
     
     def getBountyZone(self):
         hsv = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2HSV)
@@ -295,8 +302,6 @@ class Screenshot():
 
     def getCompoundCountInBounty(self, compounds) -> Constants.BountyPhases:
         maskedImage = self.getCompoundMask()
-        
-        #saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
 
         return sum([Screenshot.isPointInMask(maskedImage, point) for point in compounds])
 
