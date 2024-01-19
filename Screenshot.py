@@ -14,6 +14,9 @@ class Screenshot():
             if grayscale:
                 self.screenshot = cv2.cvtColor(self.screenshot, cv2.COLOR_BGR2GRAY)
                 
+        else:
+            raise TypeError("Screenshot must be either a string or bytes.")
+                
         self.screenshot = self.scaleMap()
     
     def getScreenshot(self) -> Constants.COLORED_IMAGE:
@@ -186,6 +189,50 @@ class Screenshot():
         return Constants.BountyCount(total)
 
     
+
+    
+    def getPhaseNumber(self, bountyNumber: int = 1) -> int:
+        """Returns the phase of the bounty based on the number of clues collected for the bounty."""
+    
+        croppedImage = self.cropArray(CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
+        
+        self.saveImage(croppedImage, str(bountyNumber) + "test.png")
+        
+        grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+        
+        nums = getText(grayImage)
+        
+        try:
+        
+            return int(re.search(r"([0-3]+)", nums).group(1))
+        
+        except AttributeError:
+            
+            return -1
+
+    def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
+        best = -1
+        bestName = None
+        for name, ss in MAPS.items():
+            try:
+                result = compareImages(self.getMap(), ss.getMap())
+                if result > best:
+                    best = result
+                    bestName = name
+            except:
+                pass
+            
+        if bestName and best > thres:
+            match bestName:
+                case Constants.Lawson.NAME:
+                    return Constants.Lawson
+                case Constants.Desalle.NAME:
+                    return Constants.Desalle
+                case Constants.Stillwater.NAME:
+                    return Constants.Stillwater
+                
+        return None
+    
     def getBountyZone(self):
         hsv = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2HSV)
     
@@ -238,50 +285,21 @@ class Screenshot():
         return filled_mask
     
     def getCompoundMask(self):
-        arr = getBountyZone(self.getMap())
-        return fillInside(arr)
-    
-    def getPhaseNumber(self, bountyNumber: int = 1) -> int:
-        """Returns the phase of the bounty based on the number of clues collected for the bounty."""
-    
-        croppedImage = self.cropArray(CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
-        
-        self.saveImage(croppedImage, str(bountyNumber) + "test.png")
-        
-        grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
-        
-        nums = getText(grayImage)
-        
-        try:
-        
-            return int(re.search(r"([0-3]+)", nums).group(1))
-        
-        except AttributeError:
-            
-            return -1
+        arr = self.getBountyZone()
+        return fillInside(arr)    
+   
+    @staticmethod 
+    def isPointInMask(mask, point: tuple):
+        return mask[point[1], point[0]] == 255
 
-    def getMapNameFromImage(self, thres: float = 0.6) -> Optional[Constants.Maps]:
-        best = -1
-        bestName = None
-        for name, ss in MAPS.items():
-            try:
-                result = compareImages(self.getMap(), ss.getMap())
-                if result > best:
-                    best = result
-                    bestName = name
-            except:
-                pass
-            
-        if bestName and best > thres:
-            match bestName:
-                case Constants.Lawson.NAME:
-                    return Constants.Lawson
-                case Constants.Desalle.NAME:
-                    return Constants.Desalle
-                case Constants.Stillwater.NAME:
-                    return Constants.Stillwater
-                
-        return None
+
+    def getCompoundCountInBounty(self, compounds) -> Constants.BountyPhases:
+        maskedImage = self.getCompoundMask()
+        
+        #saveImage(maskedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/Lawson0CMasked.jpg')
+
+        return sum([Screenshot.isPointInMask(maskedImage, point) for point in compounds])
+
     
 MAPS = {map.NAME : Screenshot(map.PATH) for map in [Constants.Lawson, Constants.Desalle, Constants.Stillwater]}
             
