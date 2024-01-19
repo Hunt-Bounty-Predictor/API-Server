@@ -126,8 +126,8 @@ class Crops:
     
     ULTRA_MAP_NAME = (ULTRAx, ULTRAy, ULTRAx + ULTRAwidth, ULTRAy + ULTRAheight)
     NORM_MAP_NAME = (NORMx, NORMy, NORMx + NORMwidth, NORMy + NORMheight)
-    NORM_MAP = (600, 190, 600 +  720, 190 + 720)
-    ULTRA_MAP = (1240, 255, 1240 + 950, 255 + 950)
+    NORM_MAP = (600, 190, 600 +  717, 190 + 717)
+    ULTRA_MAP = (1240, 255, 1240 + 955, 255 + 955)
     
     ULTRA_BOUNTY_1_NUMS = (139, 130, 139 + 72, 130 + 38)
     ULTRA_BOUNTY_1_PHASE = (74, 82, 74 + 28, 82 + 40)
@@ -140,7 +140,8 @@ class Crops:
     
     NORMAL_BOUNTY_2_NUMS = (100, 195, 100 + 58, 195 + 25)
     NORMAL_BOUNTY_2_PHASE = (53, 156, 53 + 25, 156 + 25)
-    
+
+class Sizes():
     DESIRED_SIZE = (700, 700)
     
 from enum import Enum
@@ -154,15 +155,14 @@ class CropOptions(Enum):
     BOUNTY_2_PHASE = 6
     
 class BountyPhases(Enum):
-    NO_CLUES = 0
+    NO_CLUE = 0
     ONE_CLUE = 1
-    TWO_CLUES = 2
-    THREE_CLUES = 3
+    TWO_CLUE = 2
+    THREE_CLUE = 3
     
 class BountyCount(Enum):
     ONE = 1
     TWO = 2
-    
 import numpy
     
 COLORED_IMAGE = numpy.ndarray[Literal[3]]

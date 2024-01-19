@@ -79,7 +79,7 @@ def getmapNameBasedOnText(arr): #
         
     return text
 
-def compareImages(image1, image2):
+def compareImages(image1, image2): #
 
     grayA = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
@@ -106,7 +106,7 @@ def isUltra(arr): #
         raise InvalidAspectRatio(message = str(arr.shape[:2]))
     
     
-def getMapNameBasedOnImage(arr, imagePath):
+def getMapNameBasedOnImage(arr, imagePath): 
     for imageName in os.listdir(imagePath):
         image = cv2.imread(imagePath + imageName)
         
@@ -137,7 +137,7 @@ def getMapName(uncroppedImage):
         return getMapNameBasedOnImage(uncroppedImage, r'/mnt/e/replays/Hunt Showdown/Map/testing/images/defaultMaps/')
     
 
-def cropForItem(arr, option : str):
+def cropForItem(arr, option : str): #
     
     isArrUltra = isUltra(arr)
 
@@ -162,10 +162,10 @@ def cropForItem(arr, option : str):
         return cropArray(arr, Crops.ULTRA_BOUNTY_2_PHASE if isArrUltra else Crops.NORMAL_BOUNTY_2_PHASE)
         
 
-def loadImage(file, grayscale = False):
+def loadImage(file, grayscale = False): #
     return cv2.imread(file) if not grayscale else cv2.imread(file, cv2.IMREAD_GRAYSCALE)
 
-def getMap(file, resize = True, grayscale = False):
+def getMap(file, resize = True, grayscale = False): #
     arr = loadImage(file, grayscale)
     
     arr = cropForItem(arr, CropOptions.MAP)
@@ -210,7 +210,7 @@ def getCompoundCountInBounty(mapArr, compounds) -> Constants.BountyPhases:
 
     return sum([isPointInMask(maskedImage, point) for point in compounds])
     
-def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases:
+def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhases: 
     
     """Returns the phase of the bounty based on the number of clues collected for the bounty."""
     
@@ -228,7 +228,7 @@ def getBountyPhase(image : COLORED_IMAGE, bountyNumber : int = 1) -> BountyPhase
         
         return -1
 
-def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount:
+def getNumberOfBounties(image : COLORED_IMAGE) -> Constants.BountyCount: #
     """Returns the number of bounties on the map."""
     total = 0
     
@@ -326,7 +326,7 @@ def drawPoints(arr, points):
         
     return arr
 
-def checkBountyPhaseSymbol(arr, symbol = 1):
+def checkBountyPhaseSymbol(arr, symbol = 1): #
     """Returns true if the bounty phase symbol is present in the image."""
     
     croppedImage = cropForItem(arr, CropOptions.BOUNTY_1_PHASE if symbol == 1 else CropOptions.BOUNTY_2_PHASE)

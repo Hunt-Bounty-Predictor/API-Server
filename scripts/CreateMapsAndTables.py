@@ -1,6 +1,5 @@
 from Constants import Maps, session
 from scheme import Map
-from helpers import getAllInnerClasses
 from sqlalchemy.exc import IntegrityError
 
 with session:

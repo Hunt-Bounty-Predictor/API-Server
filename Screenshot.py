@@ -83,8 +83,13 @@ class Screenshot():
     def getScreenshot(self) -> np.ndarray:
         return self.screenshot
 
-    def getMap(self) -> np.ndarray:
-        return self.cropArray(Constants.CropOptions.MAP)
+    def getMap(self, resize = True) -> np.ndarray:
+        tmpMap = self.cropArray(Constants.CropOptions.MAP)
+        return Screenshot.resize(tmpMap, Constants.Sizes.DESIRED_SIZE) if resize else tmpMap
+
+    @staticmethod
+    def resize(arr, size: Constants.Sizes) -> np.ndarray:
+        return cv2.resize(arr, size)
     
     def getMapName(self) -> Optional[str]:
         def getMostSimilarText(text):
@@ -124,7 +129,110 @@ class Screenshot():
         
         return score
     
-    def areMapsTheSame(self, screenshot: "Screenshot") -> bool:
+    @staticmethod
+    def saveImage(arr: Constants.COLORED_IMAGE, fp: str) -> bool:
+        try:
+            cv2.imwrite(fp, arr)
+        except Exception as e:
+            return False
+        
+        return True
+    
+    def areMapsTheSame(self, screenshot: "Screenshot", thres: float = 0.6) -> bool:
         map1 = self.getMap()
         map2 = screenshot.getMap()
-        return self.compareImages(map1, map2) > 0.8
+        return self.compareImages(map1, map2) > thres
+    
+    def checkBountySymbol(self, symbol: Constants.BountyPhases = Constants.BountyPhases.ONE_CLUE) -> bool:
+        crop = Constants.CropOptions.BOUNTY_1_PHASE if symbol == Constants.BountyPhases.ONE_CLUE else Constants.CropOptions.BOUNTY_2_PHASE
+        croppedImage = self.cropArray(crop)
+    
+        grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+        
+        return np.average(grayImage) > Constants.BOUNTY_SYMBOL_THRES 
+    
+    def getBountyTotal(self):
+        total = 0
+
+        if self.checkBountySymbol(Constants.BountyPhases.ONE_CLUE):
+            total += 1
+
+        if self.checkBountySymbol(Constants.BountyPhases.TWO_CLUE):
+            total += 1
+
+        return Constants.BountyCount(total)
+
+    
+    def getBountyZone(self):
+        hsv = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2HSV)
+    
+        h, s, v = cv2.split(hsv) # Up sat and brightness
+        
+        s = cv2.multiply(s, 3)
+        s = np.clip(s, 0, 255)
+        
+        v = cv2.multiply(v, 2)
+        v = np.clip(v, 0, 255)
+        
+        hsv = cv2.merge([h, s, v])
+        
+        image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        
+        lowerRange = np.array([0, 0, 100])
+        upperRange = np.array([50, 50, 255])
+        
+        mask = cv2.inRange(image, lowerRange, upperRange)
+        
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) 
+        
+        largest_contour = [cnt for cnt in contours if cv2.contourArea(cnt) > 15]
+        
+        emptyMask = np.zeros_like(image)
+        
+        cv2.drawContours(emptyMask, largest_contour, -1, (0, 255, 0), thickness=10)
+        
+        return emptyMask
+    
+    def fillInside(self):
+        # Convert to grayscale
+        gray = cv2.cvtColor(self.getMap(), cv2.COLOR_BGR2GRAY)
+        
+        # Threshold the image to get a binary image
+        _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+
+        # Find contours
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Assuming the largest contour is the one we want to fill
+        largest_contour = max(contours, key=cv2.contourArea)
+        
+        # Create an empty mask to draw the filled contour
+        filled_mask = np.zeros_like(gray)
+        
+        # Draw the filled contour on the mask
+        cv2.drawContours(filled_mask, [largest_contour], -1, color=255, thickness=cv2.FILLED)
+        
+        return filled_mask
+    
+    def getCompoundMask(self):
+        arr = getBountyZone(self.getMap())
+        return fillInside(arr)
+    
+    def getPhaseNumber(self, bountyNumber: int = 1) -> int:
+        """Returns the phase of the bounty based on the number of clues collected for the bounty."""
+    
+        croppedImage = self.cropArray(CropOptions.BOUNTY_1_NUMBERS if bountyNumber == 1 else CropOptions.BOUNTY_2_NUMBERS)
+        
+        self.saveImage(croppedImage, str(bountyNumber) + "test.png")
+        
+        grayImage = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+        
+        nums = getText(grayImage)
+        
+        try:
+        
+            return int(re.search(r"([0-3]+)", nums).group(1))
+        
+        except AttributeError:
+            
+            return -1
