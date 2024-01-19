@@ -1,9 +1,10 @@
+import pytest
 from Screenshot import Screenshot
 import Constants
 import fractions
-from tests.MapInfo import desalle_16_9_2B, desalle_21_9_2B, stillwater_16_9_1B, stillwater_21_9_2B, lawson_21_9_1B, lawson_21_9_2B
+from tests.TestMap import TestMap, desalle_16_9_2B, desalle_21_9_2B, stillwater_16_9_1B, stillwater_21_9_2B, lawson_21_9_1B, lawson_21_9_2B, testing_maps
 
-
+ids = [map.NAME for map in testing_maps]
 
 def testMapCreationFromFile():
     map = Screenshot(desalle_21_9_2B.FILEPATH)
@@ -60,6 +61,10 @@ def testCropArray():
     assert(name.shape == cropSize(Constants.Crops.NORM_MAP_NAME) + (3,))
 
 #_______________________________________________________
+
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def testIsUltra(test_map : TestMap):
+    assert test_map.isUltra()
     
 def testIsUltra():
     map = Screenshot(desalle_21_9_2B.FILEPATH)
@@ -72,7 +77,14 @@ def testIsUltra():
     
 #_______________________________________________________
 
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def testGetMapNameFromText(test_map : TestMap):
+    assert test_map.getMapNameFromText()
+
 def testGetMapNameWithText():
+    for map in [stillwater_16_9_1B, desalle_21_9_2B, desalle_16_9_2B]:
+        assert map.testGetMapNameWithText()
+
     map = Screenshot(stillwater_16_9_1B.FILEPATH)
     
     assert(map.getMapNameFromText() == Constants.Stillwater)
@@ -119,80 +131,32 @@ def testCompareImages():
 
 #________________________________________________________
 
-def testGetBountyPhase():
-    ss = Screenshot(desalle_21_9_2B.FILEPATH)
-
-    assert(ss.checkBountySymbol() == True)
-
-    assert(ss.checkBountySymbol(Constants.BountyPhases.TWO_CLUE) == True)
-
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-
-    assert (ss.checkBountySymbol() == True)
-
-    assert (ss.checkBountySymbol(Constants.BountyPhases.TWO_CLUE) == False)
-
-def testBountyCount():
-    ss = Screenshot(desalle_21_9_2B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.TWO)
-
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.ONE)
-
-    ss = Screenshot(desalle_16_9_2B.FILEPATH)
-
-    assert(ss.getBountyTotal() == Constants.BountyCount.TWO)
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_check_bounty_symbol(test_map : TestMap):
+    assert test_map.checkBountySymbol()
     
 #________________________________________________________
 
-def testPhaseDetection():
-    ss = Screenshot(lawson_21_9_1B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 0)
-    
-    assert(ss.getPhaseNumber(2) == -1)
-    
-    ss = Screenshot(lawson_21_9_2B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 0)
-    
-    assert(ss.getPhaseNumber(2) == 0)
-    
-    ss = Screenshot(desalle_16_9_2B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == -1)
-    
-    assert(ss.getPhaseNumber(2) == -1)
-    
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-    
-    assert(ss.getPhaseNumber(1) == 2)
-    
-    assert(ss.getPhaseNumber(2) == -1)
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_bounty_count(test_map : TestMap):
+    assert test_map.testBountyCount()
+#________________________________________________________
+
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_get_bounty_phase(test_map : TestMap):
+    assert test_map.testPhaseDetection()
     
 #________________________________________________________
 
-def testGetMapFromImage():
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_get_map_name_from_image(test_map : TestMap):
+    assert test_map.getMapNameFromImage()
     
-    ss = Screenshot(desalle_21_9_2B.FILEPATH)
-    assert(ss.getMapNameFromImage() == Constants.Desalle)
-    
-    ss = Screenshot(stillwater_16_9_1B.FILEPATH)
-    assert(ss.getMapNameFromImage() == Constants.Stillwater)
-    
-    ss = Screenshot("tests/map_comparision_tests/desalle_21.9_2B.jpg")
-    assert(ss.getMapNameFromImage() == Constants.Desalle)
-    
-    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_1B.jpg")
-    assert(ss.getMapNameFromImage() == Constants.Lawson)
-    
-    ss = Screenshot("tests/map_comparision_tests/lawson_21.9_2B.jpg")
-    assert(ss.getMapNameFromImage() == Constants.Lawson)
-    
-    ss = Screenshot("tests/map_comparision_tests/stillwater_21.9_2B.jpg")
-    assert(ss.getMapNameFromImage() == Constants.Stillwater)
+#________________________________________________________
+
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_get_map_name(test_map : TestMap):
+    assert test_map.getMapName()
 
 def testGetMapName():
     ss = Screenshot(desalle_21_9_2B.FILEPATH)
@@ -220,6 +184,10 @@ def testGetMapName():
     assert(ss.getMapName() == Constants.Desalle)
     
 #________________________________________________________
+
+@pytest.mark.parametrize("test_map", testing_maps, ids=ids)
+def test_get_compund_count(test_map : TestMap):
+    assert test_map.getCompundCount()
     
 def testGetCompoundCount():
     ss = Screenshot(desalle_21_9_2B.FILEPATH)

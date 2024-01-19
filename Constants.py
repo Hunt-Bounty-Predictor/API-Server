@@ -1,4 +1,5 @@
 
+from fractions import Fraction
 from sqlalchemy import create_engine, text, MetaData, Table, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column, relationship
 from typing import List, Literal, Optional, Tuple
@@ -146,6 +147,19 @@ class Crops:
 
 class Sizes():
     DESIRED_SIZE = (700, 700)
+    
+class AspectRatio:
+    RATIOS = []
+
+    @classmethod
+    def getRatios(cls) -> List[Fraction]:
+        return cls.RATIOS
+
+class ULTRA_WIDE(AspectRatio):
+    RATIOS = [Fraction(21, 9), Fraction(43, 18), Fraction(64, 27)]
+    
+class NORMAL(AspectRatio):
+    RATIOS = [Fraction(16, 9), Fraction(16, 10), Fraction(18, 9), Fraction(19, 10)]
     
 from enum import Enum
 
