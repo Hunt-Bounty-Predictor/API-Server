@@ -23,7 +23,7 @@ def override_get_db():
         db.close()
 
 def override_get_path():
-    yield "tests/testing_images/"
+    yield "tests/data/"
 
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_path] = override_get_path
