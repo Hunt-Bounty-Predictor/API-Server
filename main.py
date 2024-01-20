@@ -12,7 +12,7 @@ from pydantic import BaseModel
 import sqlalchemy.exc as SQLErrors
 from sqlalchemy.sql import exists
 import Constants
-from Constants import session
+from Constants import session, get_db, get_path
 import os
 from Screenshot import Screenshot
 
@@ -70,13 +70,15 @@ def getAPIKey():
     }
     
 @protectedRouter.post('/upload')
-async def uploadImage(file: UploadFile = File(...), username : str = Header(None)):
-    BASE_PATH = "/home/happy/apiServer/data/images/"    
+async def uploadImage(file: UploadFile = File(...), 
+                      username : str = Header(None), 
+                      db: Session = Depends(get_db),
+                      BASE_PATH : str = Depends(get_path)): 
+
     try:
-        with session:
+        with db:
             
-            existingUser = session.query(scheme.User).filter_by(name=username).first() # The user is guarenteed to exits, because of the get_user dependency
-            
+            existingUser = db.query(scheme.User).filter_by(name=username).first() # The user is guarenteed to exits, because of the get_user dependency
             contents = await file.read()
             
             ss = Screenshot(contents)
@@ -103,36 +105,35 @@ async def uploadImage(file: UploadFile = File(...), username : str = Header(None
                 
                 newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=False, user = existingUser)
                 
-                lastPrimaryPhase = session.query(scheme.PrimaryPhase)\
+                lastPrimaryPhase = db.query(scheme.PrimaryPhase)\
                     .join(scheme.PrimaryPhase.image)\
                     .filter(scheme.Image.user_id == existingUser.id)\
                     .order_by(scheme.PrimaryPhase.id.desc())\
                     .first()
                 
-                print(lastPrimaryPhase)
-                
                 newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, name = "Empty", phase_number = -1)
                 
-            session.add(newImage)
-            session.add(newPhase)
-            session.commit()
+            db.add(newImage)
+            db.add(newPhase)
+            db.commit()
             
-            session.refresh(newImage)
+            db.refresh(newImage)
             
             filePath = os.path.join(BASE_PATH, str(newImage.id) + ".jpg") # Update path
-            session.execute(
+
+            db.execute(
                 update(scheme.Image)
                 .where(scheme.Image.id == newImage.id)
                 .values(path=filePath))
-            session.commit()         
+            db.commit()         
             
-            """with open(filePath, "wb") as buffer:
-                contents = file.file.read()
-                buffer.write(contents)"""
+            with open(filePath, "wb") as buffer:
+                buffer.write(contents)
     
         return {
             'status': 'success',
-            'message': 'Image uploaded successfully'
+            'message': 'Image uploaded successfully',
+            "phase":newPhase
         }
         
     except Exception as e:
@@ -146,11 +147,11 @@ class UserIn(BaseModel):
     username: str
     
 @loginRouter.post('/register')
-async def register(user: UserIn):
+async def register(user: UserIn, db: Session = Depends(get_db)):
     try:
-        with session:
-            session.execute(insert(scheme.User), {"name": user.username})
-            session.commit()
+        with db:
+            db.execute(insert(scheme.User), {"name": user.username})
+            db.commit()
         
         return {
             'status': 'success',
@@ -168,10 +169,10 @@ async def register(user: UserIn):
                 })
     
 @loginRouter.post('/login')
-async def login(user: UserIn):
+async def login(user: UserIn, db: Session = Depends(get_db)):
     try:
-        with session:
-            user = session.query(scheme.User).filter_by(name=user.username).first()
+        with db:
+            user = db.query(scheme.User).filter_by(name=user.username).first()
             
             if user == None:
                 raise Exception("User not found")
