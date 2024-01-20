@@ -5,6 +5,20 @@ from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column, rela
 from typing import List, Literal, Optional, Tuple
 from scheme import Town, Map
 
+HUNT_DATABASE_URL = "postgresql://happy:password@localhost:5432/hunt"
+
+PROD_ENGINE = create_engine(HUNT_DATABASE_URL, echo=True)
+
+def get_db():
+    try:
+        db = Session(PROD_ENGINE)
+        yield db
+    finally:
+        db.close()
+
+def get_path():
+    yield "data/"
+
 engine = create_engine('postgresql://happy:password@localhost:5432/hunt', echo=True)
 metadata_obj = MetaData()
 session = Session(engine)
