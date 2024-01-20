@@ -78,4 +78,5 @@ def test_sending_primary_phase():
 
     response = client.post("/api/upload", headers = headers, files = file)
     assert(response.status_code == 200), response.json()
-    assert("phase" in response.json().keys())
+    phase_info = response.json()["phase_info"]
+    assert(phase_info["map_name"] == "Desalle")

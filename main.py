@@ -129,11 +129,26 @@ async def uploadImage(file: UploadFile = File(...),
             
             with open(filePath, "wb") as buffer:
                 buffer.write(contents)
+
+            phase_id = newPhase.id
+            map_name = map.NAME
+
+            def getPhaseInfo():
+                if isinstance(newPhase, scheme.PrimaryPhase):
+                    return {
+                        "phase_id" : phase_id,
+                        "map_name" : map_name
+                    }
+                elif isinstance(newPhase, scheme.Phase):
+                    return {
+                        "phase_id" : phase_id,
+                        "map_name" : map_name
+                    }
     
         return {
             'status': 'success',
             'message': 'Image uploaded successfully',
-            "phase":newPhase
+            "phase_info" : getPhaseInfo()
         }
         
     except Exception as e:
