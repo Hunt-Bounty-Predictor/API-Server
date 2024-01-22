@@ -38,8 +38,10 @@ user = {"username":"oliver"}
 def reset_database():
     print("Running reset_database fixture")
     try:
-        Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
+        yield
+        Base.metadata.drop_all(bind=engine)
+        
         print("Dropped and recreated tables")
     except Exception as e:
         print("Error resetting database:", e)
@@ -63,7 +65,7 @@ def register():
             'message': 'User registered successfully'
         }
     
-    return response
+    yield response
 
 def test_read_item():
     response = client.get("/api/APIKey")
@@ -91,7 +93,6 @@ def test_login():
             }
     
 def test_sending_primary_phase():
-    createUser()
     response = client.post("/api/register", json = user, headers = headers) 
 
     assert response.status_code == 200, response.json()
@@ -105,7 +106,6 @@ def test_sending_primary_phase():
     assert(phase_info["map_name"] == "Desalle")
 
 def test_sending_two_images(register):
-    createUser()
     file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
     file = {"file": file}
     response = client.post("/api/upload", headers = headers, files = file)
@@ -123,7 +123,6 @@ def test_sending_two_images(register):
     assert(response.json()["phase_info"]["is_primary"] == False)
 
 def test_sending_entire_map(register):
-    createUser()
     file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
     file = {"file": file}
     response = client.post("/api/upload", headers = headers, files = file)
@@ -157,7 +156,6 @@ def test_sending_entire_map(register):
     assert(response.json()["phase_info"]["is_primary"] == False)
 
 def test_sending_two_same_phases(register):
-    createUser()
     file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
     file = {"file": file}
     response = client.post("/api/upload", headers = headers, files = file)
