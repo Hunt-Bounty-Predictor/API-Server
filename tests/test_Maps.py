@@ -198,3 +198,9 @@ def testGetCompoundCount():
     
     ss = Screenshot(lawson_21_9_2B.FILEPATH)
     assert(ss.getCompoundCountInBounty(Constants.Lawson.getTownTuples()) == 16)
+
+    ss = Screenshot('tests/sequential_images/desalle_three_clues_21_9_qhd.jpg')
+    assert(ss.getCompoundCountInBounty(Constants.Desalle.getTownTuples()) == 1)
+
+    ss = Screenshot("tests/sequential_images/desalle_two_clues_21_9_qhd.jpg")
+    assert(ss.getCompoundCountInBounty(Constants.Desalle.getTownTuples()) == 6)
