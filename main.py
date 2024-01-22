@@ -1,3 +1,5 @@
+from collections import Counter
+import datetime
 from flask import Flask, request
 from typing import Union, List
 from fastapi import FastAPI, APIRouter, File, Header, UploadFile, HTTPException, Depends, status
@@ -83,13 +85,14 @@ async def uploadImage(file: UploadFile = File(...),
             
             ss = Screenshot(contents)
             
-            map = ss.getMapName()
+            mapObj = ss.getMapName()
             
-            if not map:
+            if not mapObj:
                 raise Exception("not a valid map")
             
-            # Process the image
-            bountyCount = ss.getCompoundCountInBounty(map.getTownTuples())
+            bountyStatus = ss.getCompoundStatus(mapObj.getTownTuples())
+            compoundString = "".join(["1" if compound else "0" for compound in bountyStatus])
+            bountyCount = sum(bountyStatus)
             
             if bountyCount == 16:
                 # The image is the first image of the map
@@ -97,7 +100,7 @@ async def uploadImage(file: UploadFile = File(...),
                 
                 newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=True, user = existingUser)
                 
-                newPhase = scheme.PrimaryPhase(image=newImage, map_id = map.ID, user = existingUser)
+                newPhase = scheme.PrimaryPhase(image=newImage, map_id = mapObj.ID, user = existingUser)
                 
             else:
                 # The image is not the first image of the map
@@ -105,13 +108,30 @@ async def uploadImage(file: UploadFile = File(...),
                 
                 newImage = scheme.Image(name=file.filename, path=BASE_PATH, is_primary=False, user = existingUser)
                 
-                lastPrimaryPhase = db.query(scheme.PrimaryPhase)\
+                lastPrimaryPhase : scheme.PrimaryPhase = db.query(scheme.PrimaryPhase)\
                     .join(scheme.PrimaryPhase.image)\
                     .filter(scheme.Image.user_id == existingUser.id)\
                     .order_by(scheme.PrimaryPhase.id.desc())\
                     .first()
                 
-                newPhase = scheme.Phase(image=newImage, primary_phase = lastPrimaryPhase, name = "Empty", phase_number = -1)
+                if lastPrimaryPhase == None:
+                    raise Exception("No primary phase found, Did you skip the first image?")
+                if lastPrimaryPhase.map_id != mapObj.ID:
+                    raise Exception("The map of the image does not match the map of the last intial image you sent.")
+
+                lastPhase = db.query(scheme.Phase)\
+                    .where(scheme.Phase.primary_phase_id == lastPrimaryPhase.id)\
+                    .order_by(scheme.Phase.id.desc())\
+                    .first()
+                
+                if lastPhase:   
+                    assert bountyCount < Counter(lastPhase.towns)["1"], "To many compounds compared to your last image. Did you miss some images?"
+                    
+                newPhase = scheme.Phase(image=newImage, 
+                                        primary_phase = lastPrimaryPhase, 
+                                        name = "Empty", 
+                                        phase_number = -1,
+                                        towns = compoundString)
                 
             db.add(newImage)
             db.add(newPhase)
@@ -131,19 +151,24 @@ async def uploadImage(file: UploadFile = File(...),
                 buffer.write(contents)
 
             phase_id = newPhase.id
-            map_name = map.NAME
+            map_name = mapObj.NAME
 
             def getPhaseInfo():
+                data = {
+                    "phase_id" : phase_id,
+                    "map_name" : map_name,
+                    "time" : datetime.datetime.now().time().strftime("%H:%M:%S"),
+                }
                 if isinstance(newPhase, scheme.PrimaryPhase):
-                    return {
-                        "phase_id" : phase_id,
-                        "map_name" : map_name
-                    }
+                    data.update({
+                        "is_primary" : True,
+                    })
                 elif isinstance(newPhase, scheme.Phase):
-                    return {
-                        "phase_id" : phase_id,
-                        "map_name" : map_name
-                    }
+                    data.update({
+                        "compounds_in_zone" : newPhase.towns,
+                        "is_primary" : False,
+                    })
+                return data
     
         return {
             'status': 'success',
@@ -211,5 +236,3 @@ async def login(user: UserIn, db: Session = Depends(get_db)):
 
 for router in [loginRouter, protectedRouter]:
     app.include_router(router)
-
-#Helo

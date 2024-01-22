@@ -19,6 +19,8 @@ def override_get_db():
     try:
         db = LocalTestingSession()
         yield db
+    except Exception as e:
+        print("Error getting database:", e)
     finally:
         db.close()
 
@@ -36,11 +38,34 @@ user = {"username":"oliver"}
 def reset_database():
     print("Running reset_database fixture")
     try:
-        Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
+        yield
+        Base.metadata.drop_all(bind=engine)
+        
         print("Dropped and recreated tables")
     except Exception as e:
         print("Error resetting database:", e)
+
+def createUser():
+    response = client.post("/api/register", json = user, headers = headers) 
+
+    assert response.status_code == 200, response.json()
+    assert response.json() == {
+            'status': 'success',
+            'message': 'User registered successfully'
+        }
+
+@pytest.fixture()
+def register():
+    response = client.post("/api/register", json = user, headers = headers) 
+
+    assert response.status_code == 200, response.json()
+    assert response.json() == {
+            'status': 'success',
+            'message': 'User registered successfully'
+        }
+    
+    yield response
 
 def test_read_item():
     response = client.get("/api/APIKey")
@@ -48,7 +73,6 @@ def test_read_item():
     assert response.json() == {"APIKey": APIKey}
 
 def test_register():
-    global headers
     response = client.post("/api/register", json = user, headers = headers) 
 
     assert response.status_code == 200, response.json()
@@ -80,3 +104,98 @@ def test_sending_primary_phase():
     assert(response.status_code == 200), response.json()
     phase_info = response.json()["phase_info"]
     assert(phase_info["map_name"] == "Desalle")
+
+def test_sending_two_images(register):
+    file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == True)
+
+    file = open("tests/sequential_images/desalle_one_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == False)
+
+def test_sending_entire_map(register):
+    file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == True)
+
+    file = open("tests/sequential_images/desalle_one_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == False)
+
+    file = open("tests/sequential_images/desalle_two_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == False)
+
+    file = open("tests/sequential_images/desalle_three_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == False)
+
+def test_sending_two_same_phases(register):
+    file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == True)
+
+    file = open("tests/sequential_images/desalle_one_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == False)
+
+    file = open("tests/sequential_images/desalle_one_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 500), response.json()
+    assert(response.json()["detail"]['status'] == "failure")
+    assert(response.json()["detail"]['message'] == "To many compounds compared to your last image. Did you miss some images?")
+
+def test_sending_a_diff_map(register):
+    file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 200), response.json()
+    assert(response.json()["phase_info"]["map_name"] == "Desalle")
+    assert(response.json()["phase_info"]["is_primary"] == True)
+
+    file = open("tests/sequential_images/desalle_one_clues_21_9_qhd.jpg", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    file = open("tests/testing_images/stillwater_16.9_1B.png", "rb")
+    file = {"file": file}
+    response = client.post("/api/upload", headers = headers, files = file)
+
+    assert(response.status_code == 500), response.json()
+    assert(response.json()["detail"]['message'] == "The map of the image does not match the map of the last intial image you sent.")

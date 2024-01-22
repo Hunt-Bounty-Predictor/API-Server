@@ -460,11 +460,12 @@ class Screenshot():
         
         emptyMask = np.zeros_like(image)
         
-        cv2.drawContours(emptyMask, largest_contour, -1, (0, 255, 0), thickness=10)
+        cv2.drawContours(emptyMask, largest_contour, -1, (0, 255, 0), thickness=13)
         
         return emptyMask
     
-    def fillInside(self, arr: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def fillInside(arr: np.ndarray) -> np.ndarray:
         """Fills the inside of given image with a large polygon.
 
         Returns:
@@ -522,6 +523,19 @@ class Screenshot():
         maskedImage = self.getCompoundMask()
 
         return sum([Screenshot.isPointInMask(maskedImage, point) for point in compounds])
+    
+    def getCompoundStatus(self, compounds: Tuple[int, int]) -> List[bool]:
+        """Determines if the compounds are in the bounty zone.
+
+        Args:
+            compounds (Tuple[int, int]): The compounds to check.
+
+        Returns:
+            List[bool]: The status of the compounds.
+        """
+        maskedImage = self.getCompoundMask()
+        
+        return [Screenshot.isPointInMask(maskedImage, point) for point in compounds]
 
     
 MAPS = {map.NAME : Screenshot(map.PATH) for map in [Constants.Lawson, Constants.Desalle, Constants.Stillwater]}

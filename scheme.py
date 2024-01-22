@@ -126,7 +126,7 @@ class Phase(Base):
     what_map: Mapped[Map] = relationship("Map", back_populates="phases")  # Relationship to Map
     """
     
-    primary_phase_id: Mapped[int] = mapped_column(ForeignKey("primary_phase.id"))
+    primary_phase_id: Mapped[int] = mapped_column(ForeignKey("primary_phase.id"), index=True)
     primary_phase: Mapped[PrimaryPhase] = relationship("PrimaryPhase", back_populates="phases")
     
     phase_number: Mapped[int]

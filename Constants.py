@@ -38,6 +38,8 @@ class Maps:
                 town.map_id = mapId
                 
                 towns.append(town)
+
+        towns.sort(key=lambda town: town.id)
                 
         return towns
     
