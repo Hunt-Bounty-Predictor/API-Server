@@ -53,6 +53,8 @@ def register():
             'status': 'success',
             'message': 'User registered successfully'
         }
+    
+    return response
 
 def test_read_item():
     response = client.get("/api/APIKey")
