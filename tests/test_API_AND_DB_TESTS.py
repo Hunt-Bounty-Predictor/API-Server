@@ -181,6 +181,14 @@ def test_sending_two_same_phases(register):
     assert(response.json()["detail"]['message'] == "To many compounds compared to your last image. Did you miss some images?")
 
 def test_sending_a_diff_map(register):
+    response = client.post("/api/register", json = user, headers = headers) 
+
+    assert response.status_code == 200, response.json()
+    assert response.json() == {
+            'status': 'success',
+            'message': 'User registered successfully'
+        }
+
     file = open("tests/sequential_images/desalle_no_clues_21_9_qhd.jpg", "rb")
     file = {"file": file}
     response = client.post("/api/upload", headers = headers, files = file)
