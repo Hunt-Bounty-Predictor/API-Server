@@ -168,8 +168,13 @@ class Screenshot():
         Returns:
             np.ndarray: The map within the screenshot.
         """
-        tmpMap = self.cropArray(Constants.CropOptions.MAP)
-        return Screenshot.resize(tmpMap, Constants.Sizes.DESIRED_SIZE) if resize else tmpMap
+        try:
+            return self._map
+        except AttributeError:
+
+            tmpMap = self.cropArray(Constants.CropOptions.MAP)
+            self._map = Screenshot.resize(tmpMap, Constants.Sizes.DESIRED_SIZE) if resize else tmpMap
+            return self._map
 
     @staticmethod
     def resize(arr, size: Constants.Sizes) -> np.ndarray:
